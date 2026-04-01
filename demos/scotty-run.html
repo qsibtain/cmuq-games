@@ -116,6 +116,9 @@ const player = {
   invincible: 0, // invincibility frames after hit
   dead: false,
   deadTimer: 0,
+  jumps: 0,       // tracks jumps used (0, 1, or 2)
+  maxJumps: 2,    // double jump
+  jumpPressed: false, // edge detection for spacebar
 };
 
 function resetPlayer() {
@@ -128,6 +131,8 @@ function resetPlayer() {
   player.invincible = 0;
   player.dead = false;
   player.deadTimer = 0;
+  player.jumps = 0;
+  player.jumpPressed = false;
 }
 
 // ============================================================
@@ -215,11 +220,19 @@ function updatePlayer() {
     if (Math.abs(player.vx) < 0.1) player.vx = 0;
   }
 
-  // Jump
-  if (keys['Space'] && player.onGround) {
-    player.vy = JUMP_FORCE;
-    player.onGround = false;
+  // Jump (double jump: press SPACE up to 2 times)
+  if (keys['Space'] && !player.jumpPressed) {
+    if (player.jumps < player.maxJumps) {
+      player.vy = player.jumps === 0 ? JUMP_FORCE : JUMP_FORCE * 0.8;
+      player.jumps++;
+      player.onGround = false;
+      player.jumpPressed = true;
+    }
   }
+  if (!keys['Space']) player.jumpPressed = false;
+
+  // Reset jump count on landing
+  // (handled below after ground collision sets onGround = true)
 
   // Gravity
   player.vy += GRAVITY;
@@ -255,6 +268,7 @@ function updatePlayer() {
       player.y = Math.floor((player.y + player.h) / T) * T - player.h;
       player.vy = 0;
       player.onGround = true;
+      player.jumps = 0; // reset double jump on landing
     }
   } else if (player.vy < 0) {
     // Rising — check head
@@ -417,12 +431,12 @@ function drawScotty(x, y, facing, animFrame, invincible) {
 
   const run = animFrame === 1;
 
-  // Body (CMU Red)
-  ctx.fillStyle = '#C41230';
+  // Body (Black Scotty)
+  ctx.fillStyle = '#1a1a1a';
   ctx.fillRect(2, 8, 18, 12);
 
   // Legs
-  ctx.fillStyle = '#8B0A20';
+  ctx.fillStyle = '#111';
   if (run) {
     ctx.fillRect(3, 20, 4, 7);
     ctx.fillRect(15, 18, 4, 5);
@@ -432,7 +446,7 @@ function drawScotty(x, y, facing, animFrame, invincible) {
   }
 
   // Paws
-  ctx.fillStyle = '#222';
+  ctx.fillStyle = '#333';
   if (run) {
     ctx.fillRect(2, 26, 6, 2);
     ctx.fillRect(14, 22, 6, 2);
@@ -442,19 +456,19 @@ function drawScotty(x, y, facing, animFrame, invincible) {
   }
 
   // Head
-  ctx.fillStyle = '#C41230';
+  ctx.fillStyle = '#1a1a1a';
   ctx.fillRect(14, 0, 12, 12);
 
   // Ear
-  ctx.fillStyle = '#8B0A20';
+  ctx.fillStyle = '#111';
   ctx.fillRect(22, -2, 4, 5);
 
   // Snout
-  ctx.fillStyle = '#ddd';
+  ctx.fillStyle = '#555';
   ctx.fillRect(12, 4, 4, 5);
 
   // Nose
-  ctx.fillStyle = '#222';
+  ctx.fillStyle = '#333';
   ctx.fillRect(11, 4, 3, 3);
 
   // Eye
@@ -464,13 +478,16 @@ function drawScotty(x, y, facing, animFrame, invincible) {
   ctx.fillRect(20, 3, 2, 2);
 
   // Tail
-  ctx.fillStyle = '#C41230';
+  ctx.fillStyle = '#1a1a1a';
   ctx.fillRect(-2, 6, 5, 3);
   ctx.fillRect(-4, 4, 3, 3);
 
-  // Tartan scarf
-  ctx.fillStyle = '#FFD700';
+  // CMU tartan scarf
+  ctx.fillStyle = '#C41230';
   ctx.fillRect(12, 10, 10, 2);
+  ctx.fillStyle = '#FFD700';
+  ctx.fillRect(14, 10, 2, 2);
+  ctx.fillRect(18, 10, 2, 2);
 
   ctx.restore();
 }
@@ -481,13 +498,13 @@ function drawScottyHead(x, y, size) {
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(s, s);
-  ctx.fillStyle = '#C41230';
+  ctx.fillStyle = '#1a1a1a';
   ctx.fillRect(0, 0, 16, 14);
-  ctx.fillStyle = '#8B0A20';
+  ctx.fillStyle = '#111';
   ctx.fillRect(12, -2, 4, 5);
-  ctx.fillStyle = '#ddd';
+  ctx.fillStyle = '#555';
   ctx.fillRect(-2, 4, 4, 5);
-  ctx.fillStyle = '#222';
+  ctx.fillStyle = '#333';
   ctx.fillRect(-3, 4, 3, 3);
   ctx.fillStyle = '#fff';
   ctx.fillRect(5, 2, 4, 4);
@@ -565,41 +582,106 @@ function drawCollectible(c) {
   ctx.fillRect(x + 8, y + 9, 8, 4);
 }
 
-// Draw background
+// Draw background — Doha, Qatar skyline
 function drawBackground() {
-  // Sky gradient
+  // Desert night sky gradient
   const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, '#1a1a4e');
-  grad.addColorStop(0.5, '#2d2d6b');
-  grad.addColorStop(1, '#4a4a8a');
+  grad.addColorStop(0, '#0a0a2e');
+  grad.addColorStop(0.4, '#1a1a4e');
+  grad.addColorStop(0.7, '#3d2b5a');
+  grad.addColorStop(1, '#c2956b');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 
-  // Distant buildings (parallax)
-  ctx.fillStyle = '#1a1a3a';
-  const parallax = camera.x * 0.2;
-  const buildings = [
-    { x: 50, w: 60, h: 120 },
-    { x: 150, w: 80, h: 160 },
-    { x: 280, w: 50, h: 100 },
-    { x: 370, w: 70, h: 140 },
-    { x: 500, w: 90, h: 130 },
-    { x: 640, w: 55, h: 110 },
-    { x: 750, w: 75, h: 150 },
-    { x: 880, w: 60, h: 100 },
-    { x: 980, w: 85, h: 170 },
-  ];
-  for (const b of buildings) {
-    ctx.fillRect(b.x - parallax % (W + 200), H - b.h - 60, b.w, b.h);
-  }
-
   // Stars
   ctx.fillStyle = '#fff';
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 50; i++) {
     const sx = (i * 137 + 50) % W;
-    const sy = (i * 97 + 20) % (H * 0.4);
+    const sy = (i * 97 + 20) % (H * 0.35);
     const twinkle = Math.sin(frameCount * 0.03 + i) > 0.5 ? 2 : 1;
     ctx.fillRect(sx, sy, twinkle, twinkle);
+  }
+
+  // Crescent moon
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath();
+  ctx.arc(680, 60, 20, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#0a0a2e';
+  ctx.beginPath();
+  ctx.arc(690, 55, 18, 0, Math.PI * 2);
+  ctx.fill();
+
+  const parallax = camera.x * 0.15;
+  const baseY = H - 60;
+
+  // --- Far layer: Doha skyline silhouettes ---
+  ctx.fillStyle = '#1a1a3a';
+
+  // The Torch (Aspire Tower) — tall twisted tower
+  const torchX = 80 - parallax % (W + 300);
+  ctx.fillRect(torchX + 8, baseY - 180, 14, 180);
+  ctx.fillRect(torchX, baseY - 200, 30, 25);
+  ctx.beginPath();
+  ctx.moveTo(torchX, baseY - 200);
+  ctx.lineTo(torchX + 15, baseY - 230);
+  ctx.lineTo(torchX + 30, baseY - 200);
+  ctx.fill();
+
+  // West Bay towers cluster
+  const wb = 200 - parallax % (W + 300);
+  ctx.fillRect(wb, baseY - 140, 25, 140);
+  ctx.fillRect(wb + 30, baseY - 170, 20, 170);
+  ctx.fillRect(wb + 55, baseY - 130, 22, 130);
+  ctx.fillRect(wb + 82, baseY - 155, 18, 155);
+  ctx.fillRect(wb + 105, baseY - 120, 24, 120);
+
+  // Museum of Islamic Art — geometric cube shape
+  const miaX = 420 - parallax % (W + 300);
+  ctx.fillRect(miaX, baseY - 70, 60, 70);
+  ctx.fillRect(miaX + 5, baseY - 90, 50, 25);
+  ctx.fillRect(miaX + 12, baseY - 105, 36, 20);
+  ctx.fillRect(miaX + 20, baseY - 115, 20, 15);
+
+  // Katara Towers — two arched towers
+  const katX = 600 - parallax % (W + 300);
+  ctx.fillRect(katX, baseY - 150, 16, 150);
+  ctx.fillRect(katX + 40, baseY - 150, 16, 150);
+  // Arch connecting them
+  ctx.beginPath();
+  ctx.moveTo(katX + 8, baseY - 150);
+  ctx.quadraticCurveTo(katX + 28, baseY - 190, katX + 48, baseY - 150);
+  ctx.lineTo(katX + 40, baseY - 150);
+  ctx.quadraticCurveTo(katX + 28, baseY - 170, katX + 16, baseY - 150);
+  ctx.fill();
+
+  // Al Bidda Tower
+  const alb = 770 - parallax % (W + 300);
+  ctx.fillRect(alb + 5, baseY - 160, 20, 160);
+  ctx.beginPath();
+  ctx.moveTo(alb + 5, baseY - 160);
+  ctx.lineTo(alb + 15, baseY - 180);
+  ctx.lineTo(alb + 25, baseY - 160);
+  ctx.fill();
+
+  // More West Bay towers (repeating for scroll)
+  const wb2 = 920 - parallax % (W + 300);
+  ctx.fillRect(wb2, baseY - 130, 20, 130);
+  ctx.fillRect(wb2 + 25, baseY - 150, 22, 150);
+  ctx.fillRect(wb2 + 52, baseY - 110, 18, 110);
+
+  // --- Desert sand at bottom ---
+  ctx.fillStyle = '#c2956b';
+  ctx.fillRect(0, baseY, W, 60);
+  // Sand dune curves
+  ctx.fillStyle = '#b8885f';
+  for (let i = 0; i < W; i += 120) {
+    ctx.beginPath();
+    ctx.moveTo(i, baseY + 10);
+    ctx.quadraticCurveTo(i + 60, baseY - 5, i + 120, baseY + 10);
+    ctx.lineTo(i + 120, baseY + 60);
+    ctx.lineTo(i, baseY + 60);
+    ctx.fill();
   }
 }
 
@@ -732,7 +814,7 @@ function drawTitle() {
 
   ctx.fillStyle = '#888';
   ctx.font = '12px monospace';
-  ctx.fillText('← → Move   SPACE Jump', W / 2, H / 2 + 100);
+  ctx.fillText('← → Move   SPACE Jump (x2 for Double Jump!)', W / 2, H / 2 + 100);
   ctx.fillText('Stomp enemies! Collect diplomas!', W / 2, H / 2 + 120);
 
   ctx.textAlign = 'left';
