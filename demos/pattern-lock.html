@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option C: Pattern Lock (Simon Says)</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f1a; --surface: #1a1a2e; --surface2: #222240;
+    --red: #C41230; --red-glow: #ff1a44; --green: #00e676;
+    --text: #e0e0e0; --text-dim: #888; --mono: 'Courier New', monospace;
+  }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+  h1 { color: var(--red-glow); font-size: 1.5rem; margin-bottom: 5px; }
+  .desc { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 20px; text-align: center; max-width: 450px; line-height: 1.5; }
+  .simon-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .simon-btn {
+    width: 120px; height: 120px;
+    border-radius: 16px;
+    border: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    opacity: 0.6;
+  }
+  .simon-btn:hover { opacity: 0.8; }
+  .simon-btn.flash { opacity: 1 !important; transform: scale(1.05); box-shadow: 0 0 30px rgba(255,255,255,0.3); }
+  .simon-btn.disabled { cursor: default; }
+  .simon-btn[data-color="red"] { background: #e53935; border-color: #b71c1c; }
+  .simon-btn[data-color="blue"] { background: #1e88e5; border-color: #0d47a1; }
+  .simon-btn[data-color="green"] { background: #43a047; border-color: #1b5e20; }
+  .simon-btn[data-color="yellow"] { background: #fdd835; border-color: #f9a825; }
+  .simon-btn[data-color="red"].flash { background: #ff5252; }
+  .simon-btn[data-color="blue"].flash { background: #42a5f5; }
+  .simon-btn[data-color="green"].flash { background: #66bb6a; }
+  .simon-btn[data-color="yellow"].flash { background: #ffee58; }
+
+  .status {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    min-height: 1.5em;
+    text-align: center;
+  }
+  .status.watching { color: #4fc3f7; }
+  .status.playing { color: var(--green); }
+  .status.wrong { color: #ff5252; }
+  .status.won { color: var(--green); }
+
+  .round-dots {
+    display: flex; gap: 8px; margin-bottom: 15px;
+  }
+  .dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 2px solid #444;
+    transition: all 0.3s;
+  }
+  .dot.complete { background: var(--green); border-color: var(--green); }
+  .dot.current { border-color: #4fc3f7; box-shadow: 0 0 8px rgba(79,195,247,0.5); }
+
+  .reset { margin-top: 10px; padding: 8px 20px; border-radius: 6px; border: 1px solid #555; background: var(--surface2); color: var(--text); cursor: pointer; font-size: 0.85rem; }
+  .reset:hover { border-color: var(--red); }
+
+  .thermostat-display {
+    font-size: 2rem;
+    margin-bottom: 10px;
+  }
+</style>
+</head>
+<body>
+<h1>Option C: Pattern Lock</h1>
+<p class="desc">The thermostat uses a color-coded lock. Watch the sequence, then repeat it. Each round adds one more color. Survive 5 rounds to unlock the heating!</p>
+
+<div class="thermostat-display">🌡️</div>
+<div class="round-dots" id="dots"></div>
+<div class="status" id="status">Press Start to begin</div>
+
+<div class="simon-grid">
+  <div class="simon-btn disabled" data-color="red" onclick="playerPress(0)"></div>
+  <div class="simon-btn disabled" data-color="blue" onclick="playerPress(1)"></div>
+  <div class="simon-btn disabled" data-color="green" onclick="playerPress(2)"></div>
+  <div class="simon-btn disabled" data-color="yellow" onclick="playerPress(3)"></div>
+</div>
+
+<button class="reset" id="start-btn" onclick="startGame()">Start</button>
+
+<script>
+const TOTAL_ROUNDS = 5;
+const COLORS = ['red', 'blue', 'green', 'yellow'];
+const btns = document.querySelectorAll('.simon-btn');
+
+let sequence = [];
+let playerIdx = 0;
+let round = 0;
+let accepting = false;
+
+function startGame() {
+  sequence = [];
+  round = 0;
+  document.getElementById('start-btn').textContent = 'Restart';
+  renderDots();
+  nextRound();
+}
+
+function renderDots() {
+  const dots = document.getElementById('dots');
+  dots.innerHTML = '';
+  for (let i = 0; i < TOTAL_ROUNDS; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    if (i < round) d.classList.add('complete');
+    if (i === round) d.classList.add('current');
+    dots.appendChild(d);
+  }
+}
+
+function nextRound() {
+  accepting = false;
+  btns.forEach(b => b.classList.add('disabled'));
+  sequence.push(Math.floor(Math.random() * 4));
+  round = sequence.length;
+  renderDots();
+
+  const status = document.getElementById('status');
+  status.className = 'status watching';
+  status.textContent = `Round ${round}/${TOTAL_ROUNDS} — Watch carefully...`;
+
+  // Play sequence
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i >= sequence.length) {
+      clearInterval(interval);
+      accepting = true;
+      playerIdx = 0;
+      btns.forEach(b => b.classList.remove('disabled'));
+      status.className = 'status playing';
+      status.textContent = `Your turn! Repeat the sequence (${sequence.length} colors)`;
+      return;
+    }
+    flashBtn(sequence[i]);
+    i++;
+  }, 700);
+}
+
+function flashBtn(idx) {
+  const btn = btns[idx];
+  btn.classList.add('flash');
+  setTimeout(() => btn.classList.remove('flash'), 400);
+}
+
+function playerPress(idx) {
+  if (!accepting) return;
+  flashBtn(idx);
+
+  if (idx !== sequence[playerIdx]) {
+    // Wrong!
+    accepting = false;
+    btns.forEach(b => b.classList.add('disabled'));
+    const status = document.getElementById('status');
+    status.className = 'status wrong';
+    status.textContent = `✗ Wrong! The sequence was: ${sequence.map(i => COLORS[i]).join(', ')}. Try again!`;
+    return;
+  }
+
+  playerIdx++;
+  if (playerIdx === sequence.length) {
+    accepting = false;
+    btns.forEach(b => b.classList.add('disabled'));
+
+    if (sequence.length >= TOTAL_ROUNDS) {
+      // Won!
+      const status = document.getElementById('status');
+      status.className = 'status won';
+      status.textContent = '✓ Thermostat unlocked! The building is warming up!';
+      renderDots();
+      // Mark last dot complete
+      document.querySelectorAll('.dot')[TOTAL_ROUNDS-1].classList.add('complete');
+      document.querySelectorAll('.dot')[TOTAL_ROUNDS-1].classList.remove('current');
+    } else {
+      const status = document.getElementById('status');
+      status.className = 'status playing';
+      status.textContent = `✓ Round ${sequence.length} complete!`;
+      setTimeout(nextRound, 1000);
+    }
+  }
+}
+</script>
+</body>
+</html>

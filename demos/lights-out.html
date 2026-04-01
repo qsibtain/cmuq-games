@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option E: Lights Out</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f1a; --surface: #1a1a2e; --surface2: #222240;
+    --red: #C41230; --red-glow: #ff1a44; --green: #00e676;
+    --text: #e0e0e0; --text-dim: #888; --mono: 'Courier New', monospace;
+  }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+  h1 { color: var(--red-glow); font-size: 1.5rem; margin-bottom: 5px; }
+  .desc { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 15px; text-align: center; max-width: 500px; line-height: 1.5; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 15px;
+  }
+  .cell {
+    width: 64px; height: 64px;
+    border-radius: 10px;
+    border: 2px solid #333;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+    position: relative;
+  }
+  .cell.on {
+    background: #4fc3f7;
+    border-color: #0288d1;
+    box-shadow: 0 0 15px rgba(79, 195, 247, 0.4);
+  }
+  .cell.off {
+    background: var(--surface);
+    border-color: #333;
+  }
+  .cell:hover { transform: scale(1.05); }
+  .cell:active { transform: scale(0.95); }
+
+  /* Snowflake overlay for ON cells */
+  .cell.on::after {
+    content: '❄️';
+    font-size: 1.4rem;
+  }
+  .cell.off::after {
+    content: '';
+  }
+
+  .info {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+  }
+
+  .counter-row {
+    display: flex; gap: 20px; margin-bottom: 15px;
+  }
+
+  .status {
+    font-size: 0.95rem;
+    font-weight: 600;
+    min-height: 1.4em;
+    margin-bottom: 10px;
+  }
+  .status.won { color: var(--green); }
+
+  .reset { padding: 8px 20px; border-radius: 6px; border: 1px solid #555; background: var(--surface2); color: var(--text); cursor: pointer; font-size: 0.85rem; }
+  .reset:hover { border-color: var(--red); }
+
+  .thermo { font-size: 2rem; margin-bottom: 8px; }
+
+  .temp-bar {
+    width: 200px; height: 12px;
+    background: var(--surface2);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 15px;
+    border: 1px solid #444;
+  }
+  .temp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4fc3f7, #e53935);
+    transition: width 0.3s;
+    border-radius: 6px;
+  }
+  .temp-labels {
+    display: flex; justify-content: space-between; width: 200px;
+    font-size: 0.7rem; color: var(--text-dim); margin-top: -10px; margin-bottom: 10px;
+  }
+</style>
+</head>
+<body>
+<h1>Option E: Lights Out</h1>
+<p class="desc">The AC units are out of control! Each ❄️ is a freezing vent. Click a vent to toggle it and its neighbors. Turn ALL vents off to fix the temperature!</p>
+
+<div class="thermo">🌡️</div>
+<div class="temp-bar"><div class="temp-fill" id="temp-fill"></div></div>
+<div class="temp-labels"><span>🥶 Freezing</span><span>😊 Comfy</span></div>
+
+<div class="counter-row">
+  <div class="info">Moves: <span id="moves">0</span></div>
+  <div class="info">Vents on: <span id="remaining">0</span>/25</div>
+</div>
+
+<div class="grid" id="grid"></div>
+<div class="status" id="status"></div>
+<button class="reset" onclick="init()">New Puzzle</button>
+
+<script>
+const SIZE = 5;
+let grid = [];
+let moves = 0;
+let done = false;
+
+function init() {
+  // Start with all off, then simulate random clicks to ensure solvability
+  grid = Array.from({length: SIZE}, () => Array(SIZE).fill(false));
+  moves = 0;
+  done = false;
+  document.getElementById('status').textContent = '';
+  document.getElementById('status').className = 'status';
+
+  // Randomly toggle 6-10 cells to create a solvable puzzle
+  const numClicks = 6 + Math.floor(Math.random() * 5);
+  for (let i = 0; i < numClicks; i++) {
+    const r = Math.floor(Math.random() * SIZE);
+    const c = Math.floor(Math.random() * SIZE);
+    toggleCell(r, c);
+  }
+
+  // Make sure at least 5 are on
+  let onCount = countOn();
+  while (onCount < 5) {
+    const r = Math.floor(Math.random() * SIZE);
+    const c = Math.floor(Math.random() * SIZE);
+    toggleCell(r, c);
+    onCount = countOn();
+  }
+
+  moves = 0; // Reset after setup
+  render();
+}
+
+function toggleCell(r, c) {
+  const neighbors = [[r,c],[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
+  neighbors.forEach(([nr, nc]) => {
+    if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
+      grid[nr][nc] = !grid[nr][nc];
+    }
+  });
+}
+
+function countOn() {
+  return grid.flat().filter(v => v).length;
+}
+
+function render() {
+  const el = document.getElementById('grid');
+  el.innerHTML = '';
+
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell ' + (grid[r][c] ? 'on' : 'off');
+      cell.addEventListener('click', () => handleClick(r, c));
+      el.appendChild(cell);
+    }
+  }
+
+  const on = countOn();
+  document.getElementById('moves').textContent = moves;
+  document.getElementById('remaining').textContent = on;
+
+  // Temperature bar: 100% when all off, 0% when all on
+  const pct = ((25 - on) / 25) * 100;
+  document.getElementById('temp-fill').style.width = pct + '%';
+}
+
+function handleClick(r, c) {
+  if (done) return;
+  toggleCell(r, c);
+  moves++;
+  render();
+
+  if (countOn() === 0) {
+    done = true;
+    const status = document.getElementById('status');
+    status.className = 'status won';
+    status.textContent = `✓ All vents off in ${moves} moves! The building is finally comfortable!`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>

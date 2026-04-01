@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option B: The Wiring Puzzle</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f1a; --surface: #1a1a2e; --surface2: #222240;
+    --red: #C41230; --red-glow: #ff1a44; --green: #00e676;
+    --text: #e0e0e0; --text-dim: #888; --mono: 'Courier New', monospace;
+  }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+  h1 { color: var(--red-glow); font-size: 1.5rem; margin-bottom: 5px; }
+  .desc { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 15px; text-align: center; max-width: 450px; line-height: 1.5; }
+  .grid { display: grid; gap: 4px; margin-bottom: 15px; }
+  .cell {
+    width: 80px; height: 80px;
+    background: var(--surface);
+    border: 2px solid #333;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .cell:hover { border-color: #666; }
+  .cell.connected { border-color: var(--green); background: rgba(0,230,118,0.05); }
+  .cell.source { border-color: var(--red-glow); background: rgba(196,18,48,0.1); }
+  .cell.target { border-color: #4fc3f7; background: rgba(79,195,247,0.1); }
+  .cell canvas { width: 100%; height: 100%; }
+  .success { color: var(--green); font-weight: 600; font-size: 0.95rem; min-height: 1.4em; }
+  .info { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px; }
+  .reset { margin-top: 10px; padding: 8px 20px; border-radius: 6px; border: 1px solid #555; background: var(--surface2); color: var(--text); cursor: pointer; font-size: 0.85rem; }
+  .reset:hover { border-color: var(--red); }
+  .labels { display: flex; justify-content: space-between; width: 100%; max-width: 340px; margin-bottom: 5px; font-size: 0.8rem; }
+  .labels .src { color: var(--red-glow); }
+  .labels .tgt { color: #4fc3f7; }
+</style>
+</head>
+<body>
+<h1>Option B: The Wiring Puzzle</h1>
+<p class="desc">The heating system is broken! Click pipes to rotate them and connect a path from the 🔥 Boiler (top-left) to the 🌡️ Thermostat (bottom-right).</p>
+<p class="info">Click any pipe to rotate it 90°</p>
+<div id="board"></div>
+<div class="success" id="msg"></div>
+<button class="reset" onclick="init()">Reset & Shuffle</button>
+
+<script>
+// Pipe types: each has connection directions (top, right, bottom, left) for rotation 0
+// straight: connects two opposite sides
+// elbow: connects two adjacent sides
+// tee: connects three sides
+// cross: connects all four
+const PIPE_TYPES = {
+  straight: [[1,0,1,0]], // vertical, rotate to get horizontal
+  elbow:    [[1,1,0,0]], // top+right
+  tee:      [[1,1,1,0]], // top+right+bottom
+  cross:    [[1,1,1,1]],
+};
+
+function getConnections(type, rotation) {
+  let base;
+  switch(type) {
+    case 'straight': base = [1,0,1,0]; break;
+    case 'elbow': base = [1,1,0,0]; break;
+    case 'tee': base = [1,1,1,0]; break;
+    case 'cross': base = [1,1,1,1]; break;
+  }
+  const conn = [...base];
+  for (let i = 0; i < rotation; i++) {
+    const last = conn.pop();
+    conn.unshift(last);
+  }
+  return conn; // [top, right, bottom, left]
+}
+
+const SIZE = 4;
+let grid = [];
+let solved = false;
+
+// Solution grid (known connected layout)
+const solutionTypes = [
+  ['elbow','straight','elbow','elbow'],
+  ['elbow','elbow','tee','straight'],
+  ['straight','elbow','elbow','straight'],
+  ['elbow','straight','straight','elbow'],
+];
+const solutionRots = [
+  [2,1,3,2],
+  [1,0,2,0],
+  [0,3,1,0],
+  [1,1,0,0],
+];
+
+function init() {
+  solved = false;
+  document.getElementById('msg').textContent = '';
+  grid = [];
+  for (let r = 0; r < SIZE; r++) {
+    grid[r] = [];
+    for (let c = 0; c < SIZE; c++) {
+      // Start with solution rotation, then randomize
+      const randRot = Math.floor(Math.random() * 4);
+      grid[r][c] = {
+        type: solutionTypes[r][c],
+        rotation: randRot,
+        solvedRot: solutionRots[r][c],
+      };
+    }
+  }
+  // Make sure it's not already solved
+  if (checkSolved()) {
+    grid[0][0].rotation = (grid[0][0].rotation + 1) % 4;
+  }
+  render();
+}
+
+function render() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  board.style.gridTemplateColumns = `repeat(${SIZE}, 80px)`;
+  board.className = 'grid';
+
+  const connected = getConnectedCells();
+
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      if (r === 0 && c === 0) cell.classList.add('source');
+      if (r === SIZE-1 && c === SIZE-1) cell.classList.add('target');
+      if (connected.has(`${r},${c}`)) cell.classList.add('connected');
+
+      const cvs = document.createElement('canvas');
+      cvs.width = 80; cvs.height = 80;
+      cell.appendChild(cvs);
+      drawPipe(cvs, grid[r][c].type, grid[r][c].rotation, connected.has(`${r},${c}`));
+
+      // Label
+      if (r === 0 && c === 0) {
+        const lbl = document.createElement('div');
+        lbl.style.cssText = 'position:absolute;top:2px;left:4px;font-size:14px;';
+        lbl.textContent = '🔥';
+        cell.appendChild(lbl);
+      }
+      if (r === SIZE-1 && c === SIZE-1) {
+        const lbl = document.createElement('div');
+        lbl.style.cssText = 'position:absolute;top:2px;right:4px;font-size:14px;';
+        lbl.textContent = '🌡️';
+        cell.appendChild(lbl);
+      }
+
+      cell.addEventListener('click', () => {
+        if (solved) return;
+        grid[r][c].rotation = (grid[r][c].rotation + 1) % 4;
+        render();
+        if (checkSolved()) {
+          solved = true;
+          document.getElementById('msg').textContent = '✓ The heating is back on! Building saved!';
+        }
+      });
+      board.appendChild(cell);
+    }
+  }
+}
+
+function drawPipe(canvas, type, rotation, isConnected) {
+  const ctx = canvas.getContext('2d');
+  const w = 80, h = 80, mid = 40, pw = 14;
+  ctx.clearRect(0, 0, w, h);
+
+  const conn = getConnections(type, rotation);
+  ctx.strokeStyle = isConnected ? '#00e676' : '#666';
+  ctx.lineWidth = pw;
+  ctx.lineCap = 'round';
+
+  // Draw pipe segments from center to each connected side
+  const endpoints = [
+    [mid, 0],    // top
+    [w, mid],    // right
+    [mid, h],    // bottom
+    [0, mid],    // left
+  ];
+
+  ctx.beginPath();
+  conn.forEach((c, i) => {
+    if (c) {
+      ctx.moveTo(mid, mid);
+      ctx.lineTo(endpoints[i][0], endpoints[i][1]);
+    }
+  });
+  ctx.stroke();
+
+  // Center dot
+  ctx.fillStyle = isConnected ? '#00e676' : '#888';
+  ctx.beginPath();
+  ctx.arc(mid, mid, 5, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function checkSolved() {
+  return getConnectedCells().has(`${SIZE-1},${SIZE-1}`);
+}
+
+function getConnectedCells() {
+  const visited = new Set();
+  const queue = ['0,0'];
+  visited.add('0,0');
+
+  const dirs = [
+    [-1, 0, 0, 2], // top: check my top connects to neighbor's bottom
+    [0, 1, 1, 3],  // right
+    [1, 0, 2, 0],  // bottom
+    [0, -1, 3, 1], // left
+  ];
+
+  while (queue.length > 0) {
+    const [r, c] = queue.shift().split(',').map(Number);
+    const myConn = getConnections(grid[r][c].type, grid[r][c].rotation);
+
+    dirs.forEach(([dr, dc, myDir, theirDir]) => {
+      const nr = r + dr, nc = c + dc;
+      if (nr < 0 || nr >= SIZE || nc < 0 || nc >= SIZE) return;
+      const key = `${nr},${nc}`;
+      if (visited.has(key)) return;
+      const theirConn = getConnections(grid[nr][nc].type, grid[nr][nc].rotation);
+      if (myConn[myDir] && theirConn[theirDir]) {
+        visited.add(key);
+        queue.push(key);
+      }
+    });
+  }
+  return visited;
+}
+
+init();
+</script>
+</body>
+</html>

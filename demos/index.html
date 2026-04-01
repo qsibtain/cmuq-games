@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Room 2 Options — CMU-Q Escape Room</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f0f1a; color: #e0e0e0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; }
+  h1 { color: #ff1a44; font-size: 1.8rem; margin-bottom: 8px; }
+  .sub { color: #888; margin-bottom: 30px; font-size: 0.9rem; }
+  .options { display: flex; flex-direction: column; gap: 12px; max-width: 500px; width: 100%; }
+  a {
+    display: block; padding: 18px 24px;
+    background: #1a1a2e; border: 1px solid #333; border-radius: 10px;
+    color: #e0e0e0; text-decoration: none; transition: all 0.2s;
+  }
+  a:hover { border-color: #ff1a44; transform: translateX(5px); }
+  .label { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+  .detail { font-size: 0.8rem; color: #888; line-height: 1.4; }
+</style>
+</head>
+<body>
+<h1>Room 2 Options</h1>
+<p class="sub">Try each one and pick your favorite for the escape room</p>
+<div class="options">
+  <a href="ice-slide.html">
+    <div class="label">A: Scotty's Ice Slide</div>
+    <div class="detail">Scotty slides on ice until hitting a wall/rock. Requires thinking several moves ahead. Same maze feel but genuinely challenging.</div>
+  </a>
+  <a href="wiring-puzzle.html">
+    <div class="label">B: The Wiring Puzzle</div>
+    <div class="detail">Rotate pipe segments to connect the boiler to the thermostat. Click to rotate, build the path. Classic pipe game.</div>
+  </a>
+  <a href="pattern-lock.html">
+    <div class="label">C: Pattern Lock (Simon Says)</div>
+    <div class="detail">Watch a color sequence, repeat it. Each round adds one more. Survive 5 rounds to unlock. Tests memory and focus.</div>
+  </a>
+  <a href="cipher-board.html">
+    <div class="label">D: The Cipher Board</div>
+    <div class="detail">Wordle-style word guessing with CMU-Q campus words. Green/yellow/gray feedback. 6 attempts max.</div>
+  </a>
+  <a href="lights-out.html">
+    <div class="label">E: Lights Out</div>
+    <div class="detail">5x5 grid of freezing AC vents. Click one to toggle it + neighbors. Turn all off to fix the temperature. Classic logic puzzle.</div>
+  </a>
+</div>
+</body>
+</html>

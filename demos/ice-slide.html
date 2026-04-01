@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option A: Scotty's Ice Slide</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f1a; --surface: #1a1a2e; --surface2: #222240;
+    --red: #C41230; --red-glow: #ff1a44; --green: #00e676;
+    --text: #e0e0e0; --text-dim: #888; --mono: 'Courier New', monospace;
+  }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+  h1 { color: var(--red-glow); font-size: 1.5rem; margin-bottom: 5px; }
+  .desc { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 15px; text-align: center; max-width: 450px; line-height: 1.5; }
+  .legend { display: flex; gap: 15px; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px; }
+  .legend span { display: flex; align-items: center; gap: 4px; }
+  canvas { border: 2px solid #444; border-radius: 8px; background: var(--surface); max-width: 100%; touch-action: none; }
+  .info { font-family: var(--mono); font-size: 0.85rem; color: var(--text-dim); margin-top: 10px; }
+  .controls { display: grid; grid-template-columns: repeat(3, 50px); grid-template-rows: repeat(2, 50px); gap: 6px; margin-top: 12px; }
+  .controls button { width: 50px; height: 50px; border-radius: 8px; border: 1px solid #555; background: var(--surface2); color: var(--text); font-size: 1.3rem; cursor: pointer; transition: all 0.15s; }
+  .controls button:hover { border-color: var(--red); background: var(--red); }
+  .controls button:active { transform: scale(0.9); }
+  .success { color: var(--green); font-weight: 600; margin-top: 10px; font-size: 0.95rem; min-height: 1.4em; }
+  .reset { margin-top: 10px; padding: 8px 20px; border-radius: 6px; border: 1px solid #555; background: var(--surface2); color: var(--text); cursor: pointer; font-size: 0.85rem; }
+  .reset:hover { border-color: var(--red); }
+</style>
+</head>
+<body>
+<h1>Option A: Scotty's Ice Slide</h1>
+<p class="desc">Scotty slides on ice and won't stop until hitting a wall or rock. Think ahead — you can't stop mid-slide! Guide Scotty to the thermostat.</p>
+<div class="legend">
+  <span>🐾 Scotty</span>
+  <span>🌡️ Goal</span>
+  <span>🪨 Rock</span>
+  <span>❄️ Ice</span>
+</div>
+<canvas id="c" width="360" height="360"></canvas>
+<div class="info">Moves: <span id="moves">0</span></div>
+<div class="success" id="msg"></div>
+<div class="controls">
+  <div></div><button onclick="slide(0,-1)">▲</button><div></div>
+  <button onclick="slide(-1,0)">◄</button><button onclick="slide(0,1)">▼</button><button onclick="slide(1,0)">►</button>
+</div>
+<button class="reset" onclick="reset()">Reset</button>
+
+<script>
+const CELL = 40;
+// 0=ice, 1=wall, 2=rock(stops you), 3=start, 4=goal
+const grid = [
+  [1,1,1,1,1,1,1,1,1],
+  [1,3,0,0,0,0,0,0,1],
+  [1,0,1,0,2,0,1,0,1],
+  [1,0,0,0,0,0,0,0,1],
+  [1,2,0,1,0,0,2,0,1],
+  [1,0,0,0,0,1,0,0,1],
+  [1,0,2,0,0,0,0,2,1],
+  [1,0,0,0,2,0,0,4,1],
+  [1,1,1,1,1,1,1,1,1],
+];
+const ROWS = grid.length, COLS = grid[0].length;
+let pos, moves, done;
+
+function reset() {
+  pos = {r:1, c:1}; moves = 0; done = false;
+  document.getElementById('moves').textContent = '0';
+  document.getElementById('msg').textContent = '';
+  draw();
+}
+
+function slide(dc, dr) {
+  if (done) return;
+  let nr = pos.r, nc = pos.c;
+  let moved = false;
+  while (true) {
+    const tr = nr + dr, tc = nc + dc;
+    if (tr < 0 || tr >= ROWS || tc < 0 || tc >= COLS) break;
+    if (grid[tr][tc] === 1 || grid[tr][tc] === 2) break;
+    nr = tr; nc = tc; moved = true;
+    if (grid[nr][nc] === 4) break;
+  }
+  if (!moved) return;
+  pos.r = nr; pos.c = nc;
+  moves++;
+  document.getElementById('moves').textContent = moves;
+  draw();
+  if (grid[nr][nc] === 4) {
+    done = true;
+    document.getElementById('msg').textContent = `✓ Scotty reached the thermostat in ${moves} moves!`;
+  }
+}
+
+function draw() {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  canvas.width = COLS * CELL; canvas.height = ROWS * CELL;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const x = c*CELL, y = r*CELL;
+      if (grid[r][c] === 1) {
+        ctx.fillStyle = '#111';
+        ctx.fillRect(x, y, CELL, CELL);
+      } else {
+        // Ice floor
+        ctx.fillStyle = '#1e2a4a';
+        ctx.fillRect(x, y, CELL, CELL);
+        ctx.strokeStyle = '#2a3a5a';
+        ctx.strokeRect(x, y, CELL, CELL);
+        // Ice shimmer
+        if ((r + c) % 3 === 0) {
+          ctx.font = `${CELL*0.3}px serif`;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.globalAlpha = 0.3;
+          ctx.fillText('❄️', x+CELL/2, y+CELL/2);
+          ctx.globalAlpha = 1;
+        }
+      }
+      ctx.font = `${CELL*0.6}px serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      if (grid[r][c] === 2) ctx.fillText('🪨', x+CELL/2, y+CELL/2);
+      if (grid[r][c] === 4) ctx.fillText('🌡️', x+CELL/2, y+CELL/2);
+    }
+  }
+  ctx.font = `${CELL*0.65}px serif`;
+  ctx.fillText('🐾', pos.c*CELL+CELL/2, pos.r*CELL+CELL/2);
+}
+
+document.addEventListener('keydown', e => {
+  const map = {ArrowUp:[0,-1], ArrowDown:[0,1], ArrowLeft:[-1,0], ArrowRight:[1,0]};
+  if (map[e.key]) { e.preventDefault(); slide(map[e.key][0], map[e.key][1]); }
+});
+
+let tx, ty;
+document.getElementById('c').addEventListener('touchstart', e => { tx=e.touches[0].clientX; ty=e.touches[0].clientY; }, {passive:true});
+document.getElementById('c').addEventListener('touchend', e => {
+  const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+  if (Math.abs(dx)<15&&Math.abs(dy)<15) return;
+  if (Math.abs(dx)>Math.abs(dy)) slide(dx>0?1:-1,0); else slide(0,dy>0?1:-1);
+}, {passive:true});
+
+reset();
+</script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option D: The Cipher Board</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f1a; --surface: #1a1a2e; --surface2: #222240;
+    --red: #C41230; --red-glow: #ff1a44; --green: #00e676;
+    --text: #e0e0e0; --text-dim: #888; --mono: 'Courier New', monospace;
+  }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+  h1 { color: var(--red-glow); font-size: 1.5rem; margin-bottom: 5px; }
+  .desc { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 15px; text-align: center; max-width: 500px; line-height: 1.5; }
+
+  .board { margin-bottom: 15px; }
+  .guess-row {
+    display: flex; gap: 6px; margin-bottom: 6px; justify-content: center;
+  }
+  .guess-cell {
+    width: 52px; height: 52px;
+    border: 2px solid #444;
+    border-radius: 8px;
+    background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono);
+    font-size: 1.4rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    transition: all 0.3s;
+  }
+  .guess-cell.correct { background: var(--green); border-color: var(--green); color: #000; }
+  .guess-cell.present { background: #fdd835; border-color: #f9a825; color: #000; }
+  .guess-cell.absent { background: #444; border-color: #555; color: #888; }
+  .guess-cell.active { border-color: var(--red-glow); }
+
+  .keyboard { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 15px; }
+  .kb-row { display: flex; gap: 4px; }
+  .key {
+    padding: 10px 12px;
+    min-width: 32px;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background: var(--surface2);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .key:hover { border-color: var(--red); }
+  .key.correct { background: var(--green); color: #000; border-color: var(--green); }
+  .key.present { background: #fdd835; color: #000; border-color: #f9a825; }
+  .key.absent { background: #333; color: #555; border-color: #333; }
+  .key.wide { min-width: 60px; font-size: 0.75rem; }
+
+  .hint { color: var(--text-dim); font-size: 0.8rem; margin-bottom: 10px; font-style: italic; }
+  .status { font-size: 0.95rem; font-weight: 600; min-height: 1.4em; margin-bottom: 10px; }
+  .status.won { color: var(--green); }
+  .status.lost { color: #ff5252; }
+  .reset { padding: 8px 20px; border-radius: 6px; border: 1px solid #555; background: var(--surface2); color: var(--text); cursor: pointer; font-size: 0.85rem; }
+  .reset:hover { border-color: var(--red); }
+</style>
+</head>
+<body>
+<h1>Option D: The Cipher Board</h1>
+<p class="desc">Crack the secret 5-letter CMU-Q word! After each guess, letters turn <span style="color:var(--green)">green</span> (correct spot), <span style="color:#fdd835">yellow</span> (wrong spot), or <span style="color:#666">gray</span> (not in word). 6 attempts max.</p>
+<p class="hint">Hint: It's something you'll find at CMU-Q campus</p>
+
+<div class="board" id="board"></div>
+<div class="status" id="status"></div>
+<div class="keyboard" id="keyboard"></div>
+<button class="reset" onclick="init()">New Word</button>
+
+<script>
+const WORDS = ['KARAK', 'DOHA', 'MAJLIS', 'FALCON', 'CAMPUS'];
+// Use 5-letter words only
+const TARGETS = ['KARAK', 'GRADS', 'STEAM', 'CHILL', 'SLIDE'];
+const HINTS = [
+  'A warm drink that brings CMU-Q together',
+  'They walk across the stage at the end',
+  'Science, Technology, Engineering, Arts, Math',
+  'What the AC makes you feel',
+  'What happens on the icy floors',
+];
+const VALID_5 = new Set(['KARAK','GRADS','STEAM','CHILL','SLIDE','ABOUT','ABOVE','ADMIN','AFTER','AGAIN','AHEAD','ALARM','ALERT','ALIKE','ALIVE','ALLOW','ALONE','ALONG','AMAZE','ANGEL','ANGER','ANGLE','APART','APPLE','ARENA','ARISE','ASIDE','AWAIT','AWAKE','AWARD','AWARE','BASIC','BATCH','BEACH','BEGIN','BEING','BELOW','BENCH','BILLY','BLACK','BLADE','BLAME','BLANK','BLAST','BLAZE','BLEED','BLEND','BLESS','BLIND','BLOCK','BLOOD','BLOWN','BOARD','BONUS','BOOST','BOUND','BRAIN','BRAND','BRAVE','BREAD','BREAK','BREED','BRICK','BRIEF','BRING','BROAD','BROWN','BRUSH','BUILD','BUNCH','BUYER','CABIN','CANDY','CARRY','CATCH','CAUSE','CHAIN','CHAIR','CHALK','CHAOS','CHARM','CHASE','CHEAP','CHECK','CHEEK','CHEER','CHESS','CHEST','CHIEF','CHILD','CHINA','CHUNK','CIVIL','CLAIM','CLASS','CLEAN','CLEAR','CLIMB','CLING','CLOCK','CLONE','CLOSE','CLOTH','CLOUD','COACH','COAST','COLOR','CORAL','COUNT','COURT','COVER','CRACK','CRAFT','CRASH','CRAZY','CREAM','CRISP','CROSS','CROWD','CROWN','CRUEL','CRUSH','CURVE','CYCLE','DAILY','DANCE','DEATH','DELAY','DELTA','DEPTH','DIARY','DIRTY','DOUBT','DRAFT','DRAIN','DRAMA','DRAWN','DREAM','DRESS','DRIED','DRIFT','DRINK','DRIVE','EAGER','EARLY','EARTH','EIGHT','ELECT','ELITE','EMAIL','EMPTY','ENEMY','ENJOY','ENTER','EQUAL','ERROR','EVENT','EVERY','EXACT','EXAMS','EXTRA','FAINT','FAITH','FALSE','FANCY','FATAL','FAULT','FEAST','FIBER','FIELD','FIFTY','FIGHT','FINAL','FLAME','FLASH','FLESH','FLIES','FLOAT','FLOOD','FLOOR','FLUID','FLUSH','FOCUS','FORCE','FORGE','FORTH','FORUM','FOUND','FRAME','FRANK','FRAUD','FRESH','FRONT','FROST','FRUIT','FULLY','GIANT','GIVEN','GLASS','GLOBE','GLORY','GLOVE','GOING','GRACE','GRADE','GRAIN','GRAND','GRANT','GRAPH','GRASP','GRASS','GRAVE','GREAT','GREEN','GRIEF','GRILL','GRIND','GROSS','GROUP','GROWN','GUARD','GUESS','GUIDE','GUILD','GUILT','HAPPY','HARSH','HEART','HEAVY','HELLO','HOUSE','HUMAN','HUMOR','HURRY','IDEAL','IMAGE','IMPLY','INDEX','INDIE','INNER','INPUT','ISSUE','IVORY','JEWEL','JOINT','JUDGE','JUICE','KNIFE','KNOCK','KNOWN','LABEL','LABOR','LASER','LATER','LAUGH','LAYER','LEARN','LEAST','LEAVE','LEGAL','LEVEL','LIGHT','LIMIT','LINEN','LIVER','LOCAL','LOGIC','LOOSE','LOVER','LOWER','LUCKY','LUNCH','MAGIC','MAJOR','MAKER','MARCH','MATCH','MAYOR','MEDIA','MERCY','MERIT','METAL','METER','MIGHT','MINOR','MINUS','MIXED','MODEL','MONEY','MONTH','MORAL','MOTOR','MOUNT','MOUTH','MOVIE','MUSIC','NAIVE','NERVE','NEVER','NEWLY','NIGHT','NOBLE','NOISE','NORTH','NOTED','NOVEL','NURSE','OCCUR','OCEAN','OFFER','ORDER','OTHER','OUTER','OWNER','PAINT','PANEL','PANIC','PAPER','PATCH','PEACE','PENNY','PHASE','PHONE','PIANO','PIECE','PILOT','PITCH','PIXEL','PLACE','PLAIN','PLANE','PLANT','PLATE','PLAZA','PLEAD','POINT','POUND','POWER','PRESS','PRICE','PRIDE','PRIME','PRINCE','PRINT','PRIOR','PRIZE','PROOF','PROUD','PROVE','PULSE','PUNCH','PUPIL','QUEEN','QUEST','QUEUE','QUICK','QUIET','QUITE','QUOTA','RADAR','RADIO','RAISE','RALLY','RANCH','RANGE','RAPID','RATIO','REACH','REACT','REALM','REBEL','REFER','REIGN','RELAX','REPLY','RIDER','RIDGE','RIGHT','RIGID','RISKY','RIVAL','RIVER','ROBIN','ROBOT','ROCKY','ROUGH','ROUND','ROUTE','ROYAL','RULER','RURAL','SAINT','SALAD','SAUCE','SCALE','SCARE','SCENE','SCOPE','SCORE','SENSE','SERVE','SETUP','SEVEN','SHADE','SHAKE','SHALL','SHAME','SHAPE','SHARE','SHARK','SHARP','SHEER','SHEET','SHELF','SHELL','SHIFT','SHINE','SHIRT','SHOCK','SHOOT','SHORT','SHOUT','SIGHT','SILLY','SINCE','SIXTH','SIXTY','SKILL','SKULL','SLEEP','SLICE','SMART','SMELL','SMILE','SMOKE','SNACK','SNAKE','SOLAR','SOLID','SOLVE','SORRY','SOUND','SOUTH','SPACE','SPARE','SPARK','SPEAK','SPEED','SPEND','SPICE','SPLIT','SPOKE','SPORT','SPRAY','SQUAD','STACK','STAFF','STAGE','STAIN','STAKE','STALL','STAMP','STAND','STARE','START','STATE','STAYS','STEAK','STEEL','STEEP','STEER','STICK','STIFF','STILL','STOCK','STONE','STOOD','STORE','STORM','STORY','STOVE','STRIP','STUCK','STUDY','STUFF','STYLE','SUGAR','SUITE','SUPER','SURGE','SWAMP','SWEAR','SWEEP','SWEET','SWIFT','SWING','SWORD','TABLE','TASTE','TEACH','TEETH','THANK','THEME','THICK','THIEF','THING','THINK','THIRD','THOSE','THREE','THREW','THROW','THUMB','TIGHT','TIMER','TITLE','TODAY','TOKEN','TOPIC','TOTAL','TOUCH','TOUGH','TOWER','TOXIC','TRACE','TRACK','TRADE','TRAIL','TRAIN','TRAIT','TRASH','TREAT','TREND','TRIAL','TRIBE','TRICK','TRIED','TROOP','TRUCK','TRULY','TRUMP','TRUNK','TRUST','TRUTH','TUMOR','TWICE','TWIST','ULTRA','UNDER','UNION','UNITE','UNITY','UNTIL','UPPER','UPSET','URBAN','USAGE','USUAL','VALID','VALUE','VIDEO','VIGOR','VIRUS','VISIT','VITAL','VIVID','VOCAL','VOICE','VOTER','WASTE','WATCH','WATER','WEAVE','WEIGH','WEIRD','WHEEL','WHERE','WHICH','WHILE','WHITE','WHOLE','WHOSE','WOMAN','WOMEN','WORLD','WORRY','WORSE','WORST','WORTH','WOULD','WOUND','WRATH','WRITE','WRONG','WROTE','YIELD','YOUNG','YOUTH']);
+
+let target, hint, guesses, currentGuess, gameOver, keyStates;
+const MAX_GUESSES = 6;
+const WORD_LEN = 5;
+
+function init() {
+  const idx = Math.floor(Math.random() * TARGETS.length);
+  target = TARGETS[idx];
+  hint = HINTS[idx];
+  guesses = [];
+  currentGuess = '';
+  gameOver = false;
+  keyStates = {};
+  document.querySelector('.hint').textContent = 'Hint: ' + hint;
+  document.getElementById('status').textContent = '';
+  document.getElementById('status').className = 'status';
+  render();
+}
+
+function render() {
+  // Board
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  for (let r = 0; r < MAX_GUESSES; r++) {
+    const row = document.createElement('div');
+    row.className = 'guess-row';
+    for (let c = 0; c < WORD_LEN; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'guess-cell';
+      if (r < guesses.length) {
+        cell.textContent = guesses[r].word[c];
+        cell.classList.add(guesses[r].colors[c]);
+      } else if (r === guesses.length && c < currentGuess.length) {
+        cell.textContent = currentGuess[c];
+        cell.classList.add('active');
+      }
+      row.appendChild(cell);
+    }
+    board.appendChild(row);
+  }
+
+  // Keyboard
+  const kb = document.getElementById('keyboard');
+  kb.innerHTML = '';
+  const rows = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
+  rows.forEach((r, ri) => {
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'kb-row';
+    if (ri === 2) {
+      const enter = document.createElement('button');
+      enter.className = 'key wide';
+      enter.textContent = 'ENTER';
+      enter.onclick = submitGuess;
+      rowDiv.appendChild(enter);
+    }
+    for (const ch of r) {
+      const key = document.createElement('button');
+      key.className = 'key';
+      if (keyStates[ch]) key.classList.add(keyStates[ch]);
+      key.textContent = ch;
+      key.onclick = () => addLetter(ch);
+      rowDiv.appendChild(key);
+    }
+    if (ri === 2) {
+      const del = document.createElement('button');
+      del.className = 'key wide';
+      del.textContent = '⌫';
+      del.onclick = deleteLetter;
+      rowDiv.appendChild(del);
+    }
+    kb.appendChild(rowDiv);
+  });
+}
+
+function addLetter(ch) {
+  if (gameOver || currentGuess.length >= WORD_LEN) return;
+  currentGuess += ch;
+  render();
+}
+
+function deleteLetter() {
+  if (gameOver || currentGuess.length === 0) return;
+  currentGuess = currentGuess.slice(0, -1);
+  render();
+}
+
+function submitGuess() {
+  if (gameOver) return;
+  if (currentGuess.length !== WORD_LEN) return;
+  if (!VALID_5.has(currentGuess)) {
+    document.getElementById('status').textContent = 'Not a valid word!';
+    document.getElementById('status').className = 'status lost';
+    setTimeout(() => {
+      document.getElementById('status').textContent = '';
+      document.getElementById('status').className = 'status';
+    }, 1000);
+    return;
+  }
+
+  // Score the guess
+  const colors = Array(WORD_LEN).fill('absent');
+  const targetArr = target.split('');
+  const guessArr = currentGuess.split('');
+
+  // First pass: correct
+  for (let i = 0; i < WORD_LEN; i++) {
+    if (guessArr[i] === targetArr[i]) {
+      colors[i] = 'correct';
+      targetArr[i] = null;
+      guessArr[i] = null;
+    }
+  }
+  // Second pass: present
+  for (let i = 0; i < WORD_LEN; i++) {
+    if (guessArr[i] === null) continue;
+    const idx = targetArr.indexOf(guessArr[i]);
+    if (idx !== -1) {
+      colors[i] = 'present';
+      targetArr[idx] = null;
+    }
+  }
+
+  // Update key states
+  currentGuess.split('').forEach((ch, i) => {
+    const priority = { correct: 3, present: 2, absent: 1 };
+    const current = keyStates[ch] || '';
+    if ((priority[colors[i]] || 0) > (priority[current] || 0)) {
+      keyStates[ch] = colors[i];
+    }
+  });
+
+  guesses.push({ word: currentGuess, colors });
+
+  const status = document.getElementById('status');
+  if (currentGuess === target) {
+    gameOver = true;
+    status.className = 'status won';
+    status.textContent = `✓ Cracked it in ${guesses.length} guess${guesses.length > 1 ? 'es' : ''}! The word was ${target}.`;
+  } else if (guesses.length >= MAX_GUESSES) {
+    gameOver = true;
+    status.className = 'status lost';
+    status.textContent = `✗ Out of guesses! The word was ${target}.`;
+  }
+
+  currentGuess = '';
+  render();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === 'Enter') submitGuess();
+  else if (e.key === 'Backspace') deleteLetter();
+  else if (/^[a-zA-Z]$/.test(e.key)) addLetter(e.key.toUpperCase());
+});
+
+init();
+</script>
+</body>
+</html>
