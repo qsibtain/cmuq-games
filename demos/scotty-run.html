@@ -41,7 +41,7 @@ const T = 64; // tile size (2x for high-res)
 
 // ============================================================
 // LEVEL DATA — 4 levels, 75 tiles wide x 15 tiles tall
-// 0=air, 1=ground, 2=brick, 3=collectible, 4=enemy, 5=goal/boss-trigger
+// 0=air, 1=ground, 2=brick, 3=collectible, 4=enemy, 5=goal/boss-trigger, 6=health(CMU shield)
 // ============================================================
 const LEVEL_W = 75;
 const LEVEL_H = 15;
@@ -57,8 +57,8 @@ const allLevelData = [
     '000000000000000300030000000000000000003000000000000000000030000000000000000',
     '000000000000022222200000000000000000222200000000002220000022200000000000000',
     '000000000000000000000000003003000000000000000000000000000000000000000000000',
-    '000000030000000000000000022222200000000000030000000000000000000222000000000',
-    '000000222000000000000000000000000000000000222000000000000000000000000000000',
+    '000000030000000000000000022222200000000000030000000000006000000222000000000',
+    '000000222000000000000000000000000000000000222000000000022200000000000000000',
     '000000000000000000000300000000000000000000000000000000030000000000002220000',
     '000000000000000000002220000000003000000000000000000000222000000000000000050',
     '000000000004000000000000000000022200004000000004000000000000000040000000000',
@@ -77,8 +77,8 @@ const allLevelData = [
     '000000022220000000000000000000000300000000000000000000300000000000000000000',
     '000000000000000000000300000000002222000000000000000002222000000000000000000',
     '000030000000000000002220000000000000000000000000000000000000000000000000000',
-    '000222000000000000000000000000000000003000000000000000000000030000000000000',
-    '000000000004000000000000000400000000022200000400000000000002220000000000050',
+    '000222000000000000000000000000000000003000000000000060000000030000000000000',
+    '000000000004000000000000000400000000022200000400000022200002220000000000050',
     '000000000000000000000000000000000000000000000000000000000000000000004000000',
     '111111111111111001111111111111111001111111111111111001111111111111111111111',
     '111111111111111001111111111111111001111111111111111001111111111111111111111',
@@ -92,9 +92,9 @@ const allLevelData = [
     '000000000000000000000022200000000000000000003000000002220000000000000000000',
     '000000000030000000000000000000000003000000022200000000000000030000000000000',
     '000000002222000000000000000000000222200000000000000000000000222000000000000',
-    '000000000000000030000000000300000000000000000000030000000000000000000000000',
-    '000000000000000222000000002220000000000003000000222000000000000000000000000',
-    '000030000000000000000000000000000000000022200000000000000000000000000000000',
+    '000000000000000030000000000300000000000060000000030000000000000000000000000',
+    '000000000000000222000000002220000000000022200000222000000000000000000000000',
+    '000030000000000000000000000000000000000000000000000000000000000000000000000',
     '002222000000000000000000000000000000000000000000000000000000000030000000000',
     '000000000004000000000004000000000004000000000004000000000004002220000000050',
     '000000000000000000000000000000000000000000000000000000000000000000000400000',
@@ -113,8 +113,8 @@ const allLevelData = [
     '000000000000000000030000000000000000000000030000000000030000000000000000000',
     '000000000000000002220000000000000000000002220000000000222000000000000000000',
     '000030000000000000000000000000000000000000000000000000000000000000000000000',
-    '002222000000000000000000000000000000000000000000000000000000000300000000000',
-    '000000000004000000000004000004000004000004000000040000040000022200000000050',
+    '002222000000000000000000000000000000600000000000000000000000000300000000000',
+    '000000000004000000000004000004000002220004000000040000040000022200000000050',
     '000000000000000000000000000000000000000000000000000000000000000000000400000',
     '111111110011110011001111110010011111100110011100111111100110111111111111111',
     '111111110011110011001111110010011111100110011100111111100110111111111111111',
@@ -198,6 +198,7 @@ function resetPlayer() {
 // ============================================================
 let collectibles = [];
 let enemies = [];
+let healthPickups = [];
 let particles = [];
 let goalX = 0;
 
@@ -208,6 +209,7 @@ let bossProjectiles = [];
 function initEntities() {
   collectibles = [];
   enemies = [];
+  healthPickups = [];
   particles = [];
   bossProjectiles = [];
   goalX = 0;
@@ -217,6 +219,9 @@ function initEntities() {
       const tile = level[r][c];
       if (tile === 3) {
         collectibles.push({ x: c * T + 8, y: r * T + 8, w: 48, h: 48, collected: false, bobOffset: Math.random() * Math.PI * 2 });
+        level[r][c] = 0;
+      } else if (tile === 6) {
+        healthPickups.push({ x: c * T + 8, y: r * T + 8, w: 48, h: 48, collected: false, bobOffset: Math.random() * Math.PI * 2 });
         level[r][c] = 0;
       } else if (tile === 4) {
         enemies.push({
@@ -265,10 +270,10 @@ function spawnBoss() {
 // ============================================================
 // PHYSICS & COLLISION
 // ============================================================
-const GRAVITY = 0.7;
+const GRAVITY = 0.6;
 const MAX_FALL = 14;
 const MOVE_SPEED = 5.5;
-const JUMP_FORCE = -14;
+const JUMP_FORCE = -15.5;
 const FRICTION = 0.85;
 
 function getTile(px, py) {
@@ -333,7 +338,7 @@ function updatePlayer() {
   // Jump (double jump)
   if (keys['Space'] && !player.jumpPressed) {
     if (player.jumps < player.maxJumps) {
-      player.vy = player.jumps === 0 ? JUMP_FORCE : JUMP_FORCE * 0.8;
+      player.vy = player.jumps === 0 ? JUMP_FORCE : JUMP_FORCE * 0.9;
       player.jumps++;
       player.onGround = false;
       player.jumpPressed = true;
@@ -618,6 +623,20 @@ function updateCollectibles() {
   }
 }
 
+function updateHealthPickups() {
+  for (const h of healthPickups) {
+    if (h.collected) continue;
+    h.bobOffset += 0.04;
+    if (!player.dead && rectsOverlap(player, { x: h.x, y: h.y + Math.sin(h.bobOffset) * 4, w: h.w, h: h.h })) {
+      h.collected = true;
+      lives = Math.min(lives + 2, 7);
+      score += 250;
+      spawnParticles(h.x + h.w / 2, h.y + h.h / 2, '#C41230', 10);
+      spawnParticles(h.x + h.w / 2, h.y + h.h / 2, '#FFD700', 10);
+    }
+  }
+}
+
 function spawnParticles(x, y, color, count) {
   for (let i = 0; i < count; i++) {
     particles.push({
@@ -665,75 +684,146 @@ function drawScotty(x, y, facing, animFrame, invincible) {
 
   const run = animFrame === 1;
 
+  // === BODY — barrel-chested terrier ===
   ctx.fillStyle = '#1a1a1a';
-  ctx.fillRect(2, 8, 18, 12);
-
-  ctx.fillStyle = '#111';
-  if (run) {
-    ctx.fillRect(3, 20, 4, 7);
-    ctx.fillRect(15, 18, 4, 5);
-  } else {
-    ctx.fillRect(3, 20, 4, 6);
-    ctx.fillRect(15, 20, 4, 6);
-  }
-
-  ctx.fillStyle = '#333';
-  if (run) {
-    ctx.fillRect(2, 26, 6, 2);
-    ctx.fillRect(14, 22, 6, 2);
-  } else {
-    ctx.fillRect(2, 25, 6, 2);
-    ctx.fillRect(14, 25, 6, 2);
-  }
-
-  ctx.fillStyle = '#1a1a1a';
-  ctx.fillRect(14, 0, 12, 12);
-
-  ctx.fillStyle = '#111';
-  ctx.fillRect(22, -2, 4, 5);
-
-  ctx.fillStyle = '#555';
-  ctx.fillRect(12, 4, 4, 5);
-
-  ctx.fillStyle = '#333';
-  ctx.fillRect(11, 4, 3, 3);
-
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(19, 2, 4, 4);
+  ctx.fillRect(0, 8, 22, 13); // main body
   ctx.fillStyle = '#222';
-  ctx.fillRect(20, 3, 2, 2);
+  ctx.fillRect(1, 9, 20, 4); // chest highlight
+  // Belly/underside slightly lighter
+  ctx.fillStyle = '#2a2a2a';
+  ctx.fillRect(4, 17, 14, 3);
 
+  // === LEGS — four distinct legs ===
   ctx.fillStyle = '#1a1a1a';
-  ctx.fillRect(-2, 6, 5, 3);
-  ctx.fillRect(-4, 4, 3, 3);
+  if (run) {
+    // Front legs
+    ctx.fillRect(15, 19, 4, 8);
+    ctx.fillRect(12, 18, 4, 5);
+    // Back legs
+    ctx.fillRect(2, 18, 4, 5);
+    ctx.fillRect(5, 19, 4, 8);
+  } else {
+    // Standing — four legs visible
+    ctx.fillRect(14, 19, 4, 7);
+    ctx.fillRect(17, 19, 4, 7);
+    ctx.fillRect(1, 19, 4, 7);
+    ctx.fillRect(4, 19, 4, 7);
+  }
+  // Paws
+  ctx.fillStyle = '#333';
+  if (run) {
+    ctx.fillRect(14, 26, 6, 2);
+    ctx.fillRect(4, 26, 6, 2);
+  } else {
+    ctx.fillRect(13, 25, 9, 2);
+    ctx.fillRect(0, 25, 9, 2);
+  }
 
-  // CMU tartan scarf
+  // === HEAD — blocky terrier head ===
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(14, -1, 13, 13); // main head block
+  // Brow ridge
+  ctx.fillStyle = '#222';
+  ctx.fillRect(14, -1, 13, 3);
+
+  // === EARS — pointy terrier ears ===
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(23, -5, 5, 6);
+  ctx.fillRect(15, -4, 4, 5);
+  // Inner ear
+  ctx.fillStyle = '#4a2a2a';
+  ctx.fillRect(24, -3, 3, 3);
+  ctx.fillRect(16, -2, 2, 2);
+
+  // === SNOUT — long scottie snout ===
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(10, 3, 6, 7);
+  // Beard (scottie characteristic)
+  ctx.fillStyle = '#2a2a2a';
+  ctx.fillRect(10, 7, 6, 4);
+  ctx.fillRect(9, 8, 3, 3);
+
+  // === NOSE ===
+  ctx.fillStyle = '#333';
+  ctx.fillRect(9, 3, 3, 3);
+
+  // === EYES — bright and alert ===
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(19, 1, 5, 5);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(20, 2, 3, 3);
+  // Eye shine
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(21, 2, 1, 1);
+
+  // === TAIL — upright scottie tail ===
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(-3, 5, 4, 4);
+  ctx.fillRect(-4, 2, 3, 4);
+  ctx.fillRect(-5, 0, 2, 3);
+
+  // === TARTAN SCARF — prominent CMU tartan ===
+  // Main scarf band (wider, more visible)
+  ctx.fillStyle = '#C41230'; // CMU Red
+  ctx.fillRect(10, 10, 14, 4);
+  // Hanging tail of scarf
   ctx.fillStyle = '#C41230';
-  ctx.fillRect(12, 10, 10, 2);
+  ctx.fillRect(8, 12, 4, 5);
+  ctx.fillRect(7, 15, 3, 3);
+  // Gold tartan stripes
   ctx.fillStyle = '#FFD700';
-  ctx.fillRect(14, 10, 2, 2);
-  ctx.fillRect(18, 10, 2, 2);
+  ctx.fillRect(12, 10, 2, 4);
+  ctx.fillRect(17, 10, 2, 4);
+  ctx.fillRect(22, 10, 2, 4);
+  // Horizontal gold stripe
+  ctx.fillRect(10, 12, 14, 1);
+  // White tartan accent
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(14, 11, 1, 2);
+  ctx.fillRect(19, 11, 1, 2);
+  // Hanging scarf pattern
+  ctx.fillStyle = '#FFD700';
+  ctx.fillRect(8, 14, 2, 1);
+  ctx.fillRect(8, 16, 1, 1);
 
   ctx.restore();
 }
 
 function drawScottyHead(x, y, size) {
-  const s = size / 8;
+  const s = size / 16;
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(s, s);
+  // Head
   ctx.fillStyle = '#1a1a1a';
-  ctx.fillRect(0, 0, 16, 14);
-  ctx.fillStyle = '#111';
-  ctx.fillRect(12, -2, 4, 5);
-  ctx.fillStyle = '#555';
-  ctx.fillRect(-2, 4, 4, 5);
+  ctx.fillRect(2, 2, 14, 14);
+  // Ears
+  ctx.fillRect(13, -2, 5, 6);
+  ctx.fillRect(0, -1, 4, 5);
+  ctx.fillStyle = '#4a2a2a';
+  ctx.fillRect(14, -1, 3, 3);
+  ctx.fillRect(1, 0, 2, 2);
+  // Snout
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(-2, 6, 5, 6);
+  ctx.fillStyle = '#2a2a2a';
+  ctx.fillRect(-2, 9, 5, 4);
+  // Nose
   ctx.fillStyle = '#333';
-  ctx.fillRect(-3, 4, 3, 3);
+  ctx.fillRect(-3, 6, 3, 3);
+  // Eye
   ctx.fillStyle = '#fff';
-  ctx.fillRect(5, 2, 4, 4);
-  ctx.fillStyle = '#222';
-  ctx.fillRect(6, 3, 2, 2);
+  ctx.fillRect(7, 4, 5, 5);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(8, 5, 3, 3);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(9, 5, 1, 1);
+  // Scarf hint
+  ctx.fillStyle = '#C41230';
+  ctx.fillRect(2, 14, 14, 3);
+  ctx.fillStyle = '#FFD700';
+  ctx.fillRect(5, 14, 2, 3);
+  ctx.fillRect(10, 14, 2, 3);
   ctx.restore();
 }
 
@@ -758,8 +848,8 @@ function drawBoss() {
   ctx.translate(-20, -22);
 
   if (currentLevel === 1) {
-    // Fuad — businessman with briefcase
-    // Body (suit)
+    // Fuad — BALD businessman with briefcase
+    // Body (dark suit)
     ctx.fillStyle = '#2c3e50';
     ctx.fillRect(5, 16 + wobble, 30, 24);
     // Shirt/tie
@@ -767,12 +857,14 @@ function drawBoss() {
     ctx.fillRect(15, 16 + wobble, 10, 24);
     ctx.fillStyle = '#C41230';
     ctx.fillRect(18, 16 + wobble, 4, 20);
-    // Head
+    // Head — BALD (skin-colored, no hair)
     ctx.fillStyle = '#d4a574';
     ctx.fillRect(8, 0 + wobble, 24, 18);
-    // Hair
-    ctx.fillStyle = '#222';
-    ctx.fillRect(8, 0 + wobble, 24, 6);
+    // Bald head shine
+    ctx.fillStyle = '#e0b888';
+    ctx.fillRect(14, 1 + wobble, 10, 4);
+    ctx.fillStyle = '#eac89a';
+    ctx.fillRect(17, 0 + wobble, 5, 2);
     // Glasses
     ctx.fillStyle = '#333';
     ctx.fillRect(10, 8 + wobble, 8, 6);
@@ -781,6 +873,10 @@ function drawBoss() {
     ctx.fillRect(11, 9 + wobble, 6, 4);
     ctx.fillRect(23, 9 + wobble, 6, 4);
     ctx.fillRect(18, 10 + wobble, 4, 2);
+    // Eyebrows
+    ctx.fillStyle = '#555';
+    ctx.fillRect(11, 7 + wobble, 6, 1);
+    ctx.fillRect(23, 7 + wobble, 6, 1);
     // Mouth
     ctx.fillStyle = '#a0522d';
     ctx.fillRect(16, 14 + wobble, 8, 2);
@@ -788,47 +884,57 @@ function drawBoss() {
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(8, 38 + wobble, 10, 6);
     ctx.fillRect(22, 38 + wobble, 10, 6);
+    // Shoes
+    ctx.fillStyle = '#111';
+    ctx.fillRect(6, 43 + wobble, 13, 3);
+    ctx.fillRect(20, 43 + wobble, 13, 3);
     // Briefcase
     ctx.fillStyle = '#8B4513';
     ctx.fillRect(-4, 28, 12, 10);
     ctx.fillStyle = '#DAA520';
     ctx.fillRect(-1, 28, 6, 2);
   } else if (currentLevel === 2) {
-    // Dudley — academic with books
-    // Body (tweed jacket)
+    // Dudley — THIN academic with books
+    // Body (narrow tweed jacket — thin build)
     ctx.fillStyle = '#8B7355';
-    ctx.fillRect(5, 16 + wobble, 30, 24);
+    ctx.fillRect(9, 16 + wobble, 22, 24);
     // Elbow patches
     ctx.fillStyle = '#654321';
-    ctx.fillRect(3, 24 + wobble, 6, 8);
-    ctx.fillRect(31, 24 + wobble, 6, 8);
+    ctx.fillRect(7, 24 + wobble, 4, 8);
+    ctx.fillRect(29, 24 + wobble, 4, 8);
     // Shirt
     ctx.fillStyle = '#fff';
-    ctx.fillRect(14, 16 + wobble, 12, 6);
+    ctx.fillRect(15, 16 + wobble, 10, 6);
     // Bow tie
     ctx.fillStyle = '#C41230';
-    ctx.fillRect(15, 16 + wobble, 4, 4);
-    ctx.fillRect(21, 16 + wobble, 4, 4);
+    ctx.fillRect(16, 16 + wobble, 3, 4);
+    ctx.fillRect(21, 16 + wobble, 3, 4);
     ctx.fillRect(19, 17 + wobble, 2, 2);
-    // Head
+    // Head (narrower for thin look)
     ctx.fillStyle = '#e8c4a0';
-    ctx.fillRect(8, 0 + wobble, 24, 18);
-    // Hair (gray, distinguished)
+    ctx.fillRect(10, 0 + wobble, 20, 18);
+    // Hair (gray, distinguished, thinner face)
     ctx.fillStyle = '#888';
-    ctx.fillRect(8, 0 + wobble, 24, 5);
-    ctx.fillRect(8, 0 + wobble, 4, 10);
-    ctx.fillRect(28, 0 + wobble, 4, 10);
-    // Eyes
+    ctx.fillRect(10, 0 + wobble, 20, 4);
+    ctx.fillRect(10, 0 + wobble, 3, 8);
+    ctx.fillRect(27, 0 + wobble, 3, 8);
+    // Eyes (alert)
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(14, 7 + wobble, 5, 4);
+    ctx.fillRect(22, 7 + wobble, 5, 4);
     ctx.fillStyle = '#333';
-    ctx.fillRect(14, 8 + wobble, 4, 4);
-    ctx.fillRect(22, 8 + wobble, 4, 4);
+    ctx.fillRect(15, 8 + wobble, 3, 3);
+    ctx.fillRect(23, 8 + wobble, 3, 3);
+    // Thin nose
+    ctx.fillStyle = '#d4a574';
+    ctx.fillRect(19, 9 + wobble, 2, 4);
     // Smile
     ctx.fillStyle = '#a0522d';
-    ctx.fillRect(16, 14 + wobble, 8, 2);
-    // Legs
+    ctx.fillRect(16, 14 + wobble, 8, 1);
+    // Thin legs
     ctx.fillStyle = '#4a4a4a';
-    ctx.fillRect(8, 38 + wobble, 10, 6);
-    ctx.fillRect(22, 38 + wobble, 10, 6);
+    ctx.fillRect(11, 38 + wobble, 7, 6);
+    ctx.fillRect(22, 38 + wobble, 7, 6);
     // Stack of books
     ctx.fillStyle = '#C41230';
     ctx.fillRect(-6, 24, 10, 4);
@@ -837,7 +943,7 @@ function drawBoss() {
     ctx.fillStyle = '#27ae60';
     ctx.fillRect(-6, 32, 10, 4);
   } else if (currentLevel === 3) {
-    // Mike Trick — The Dean (imposing, graduation robes)
+    // Mike Trick — The Dean (graduation robes, WHITE FRENCH BEARD)
     // Graduation robe
     ctx.fillStyle = '#111';
     ctx.fillRect(3, 14 + wobble, 34, 28);
@@ -851,9 +957,23 @@ function drawBoss() {
     // Head
     ctx.fillStyle = '#d4a574';
     ctx.fillRect(8, 0 + wobble, 24, 16);
-    // Hair
-    ctx.fillStyle = '#555';
-    ctx.fillRect(8, 0 + wobble, 24, 5);
+    // Hair (gray/white)
+    ctx.fillStyle = '#ccc';
+    ctx.fillRect(8, 0 + wobble, 24, 4);
+    ctx.fillStyle = '#bbb';
+    ctx.fillRect(8, 0 + wobble, 3, 7);
+    ctx.fillRect(29, 0 + wobble, 3, 7);
+    // WHITE FRENCH BEARD — goatee style
+    ctx.fillStyle = '#ddd';
+    ctx.fillRect(14, 13 + wobble, 12, 3); // upper beard
+    ctx.fillStyle = '#eee';
+    ctx.fillRect(15, 16 + wobble, 10, 4); // main beard
+    ctx.fillRect(16, 20 + wobble, 8, 2);  // lower point
+    ctx.fillRect(18, 22 + wobble, 4, 2);  // chin point
+    // Mustache
+    ctx.fillStyle = '#ddd';
+    ctx.fillRect(13, 11 + wobble, 5, 2);
+    ctx.fillRect(22, 11 + wobble, 5, 2);
     // Graduation cap (mortarboard)
     ctx.fillStyle = '#111';
     ctx.fillRect(4, -4 + wobble, 32, 4);
@@ -863,15 +983,15 @@ function drawBoss() {
     ctx.fillRect(4, -4 + wobble, 2, 10);
     ctx.fillRect(1, 4 + wobble, 6, 3);
     // Eyes (determined)
-    ctx.fillStyle = '#333';
-    ctx.fillRect(14, 6 + wobble, 4, 4);
-    ctx.fillRect(22, 6 + wobble, 4, 4);
     ctx.fillStyle = '#fff';
-    ctx.fillRect(15, 7 + wobble, 2, 2);
-    ctx.fillRect(23, 7 + wobble, 2, 2);
-    // Stern mouth
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(15, 12 + wobble, 10, 2);
+    ctx.fillRect(13, 5 + wobble, 5, 5);
+    ctx.fillRect(22, 5 + wobble, 5, 5);
+    ctx.fillStyle = '#333';
+    ctx.fillRect(14, 6 + wobble, 3, 3);
+    ctx.fillRect(23, 6 + wobble, 3, 3);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(15, 6 + wobble, 1, 1);
+    ctx.fillRect(24, 6 + wobble, 1, 1);
     // Legs
     ctx.fillStyle = '#111';
     ctx.fillRect(8, 40 + wobble, 10, 6);
@@ -1085,6 +1205,76 @@ function drawCollectible(c) {
   ctx.fillStyle = '#C41230';
   ctx.fillRect(10, 7, 4, 8);
   ctx.fillRect(8, 9, 8, 4);
+
+  ctx.restore();
+}
+
+// CMU Shield — health pickup (+2 lives)
+function drawHealthPickup(h) {
+  if (h.collected) return;
+  const x = h.x - camera.x;
+  const y = h.y + Math.sin(h.bobOffset) * 4;
+  const glow = Math.sin(frameCount * 0.08) * 0.3 + 0.7;
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(2, 2);
+
+  // Glow effect
+  ctx.globalAlpha = glow * 0.3;
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath();
+  ctx.arc(12, 12, 16, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Shield shape — pointed bottom
+  ctx.fillStyle = '#C41230';
+  ctx.beginPath();
+  ctx.moveTo(2, 2);
+  ctx.lineTo(22, 2);
+  ctx.lineTo(22, 14);
+  ctx.lineTo(12, 23);
+  ctx.lineTo(2, 14);
+  ctx.closePath();
+  ctx.fill();
+
+  // Inner shield
+  ctx.fillStyle = '#8a0a20';
+  ctx.beginPath();
+  ctx.moveTo(5, 5);
+  ctx.lineTo(19, 5);
+  ctx.lineTo(19, 13);
+  ctx.lineTo(12, 20);
+  ctx.lineTo(5, 13);
+  ctx.closePath();
+  ctx.fill();
+
+  // Gold border
+  ctx.strokeStyle = '#FFD700';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(2, 2);
+  ctx.lineTo(22, 2);
+  ctx.lineTo(22, 14);
+  ctx.lineTo(12, 23);
+  ctx.lineTo(2, 14);
+  ctx.closePath();
+  ctx.stroke();
+
+  // CMU text
+  ctx.fillStyle = '#FFD700';
+  ctx.font = 'bold 6px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('CMU', 12, 11);
+  ctx.textAlign = 'left';
+
+  // + heart symbol
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 5px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('+2', 12, 17);
+  ctx.textAlign = 'left';
 
   ctx.restore();
 }
@@ -1898,6 +2088,7 @@ function update() {
     updatePlayer();
     updateEnemies();
     updateCollectibles();
+    updateHealthPickups();
     updateParticles();
     updateCamera();
   } else if (gameState === 'bossFight') {
@@ -1906,6 +2097,7 @@ function update() {
     updateBoss();
     updateBossProjectiles();
     updateCollectibles();
+    updateHealthPickups();
     updateParticles();
     updateCamera();
   } else if (gameState === 'passNoPass') {
@@ -1955,6 +2147,7 @@ function draw() {
     drawTiles();
     drawGoal();
     for (const c of collectibles) drawCollectible(c);
+    for (const h of healthPickups) drawHealthPickup(h);
     for (const e of enemies) drawEnemy(e);
     if (gameState === 'bossFight') {
       drawBoss();
