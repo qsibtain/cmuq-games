@@ -2049,7 +2049,7 @@ function drawTitle() {
   const modes = [
     { name: 'Normal', desc: 'Full challenge', desc2: 'Earn letter grades', color: '#FFD700', bg: 'rgba(50,50,80,' },
     { name: 'Assist', desc: 'Can\'t die, knockback', desc2: 'Max grade: C', color: '#4a9', bg: 'rgba(50,80,50,' },
-    { name: 'Invincible', desc: 'Shield + float', desc2: 'Just enjoy the ride!', color: '#88f', bg: 'rgba(50,50,100,' },
+    { name: 'Invincible', desc: 'Shield + float', desc2: 'Grade: Pass', color: '#88f', bg: 'rgba(50,50,100,' },
   ];
   const boxW = 230;
   const boxH = 70;
@@ -2248,9 +2248,9 @@ function calculateGrade() {
     if (pct >= 0.25) return { letter: 'C', label: 'Satisfactory (Assist Mode)', color: '#ccc' };
     return { letter: 'D', label: 'Academic Probation', color: '#ff6666' };
   }
-  // Invincible mode caps grade at D
+  // Invincible mode — just a Pass
   if (gameMode === 2) {
-    return { letter: 'D', label: 'Tourist Mode', color: '#88f' };
+    return { letter: 'P', label: 'Pass (Invincible Mode)', color: '#88f' };
   }
 
   if (pct >= 0.9 && lives >= 4) return { letter: 'A+', label: 'Summa Cum Laude', color: '#FFD700' };
