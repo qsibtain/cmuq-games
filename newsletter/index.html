@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CMU-Q Weekly Games</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red: #C41230;
+    --red-dark: #9e0e27;
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --text: #1a1a2e;
+    --text-dim: #6b7280;
+    --border: #e5e7eb;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 40px 0;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  header h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  header .week {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
+  header .divider {
+    width: 48px;
+    height: 3px;
+    background: var(--red);
+    margin: 16px auto 0;
+    border-radius: 2px;
+  }
+
+  .games {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .game-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: var(--shadow);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .game-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+
+  .game-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    flex-shrink: 0;
+  }
+
+  .game-icon.connections { background: #f3e8ff; }
+  .game-icon.wordle { background: #dcfce7; }
+  .game-icon.crossword { background: #dbeafe; }
+
+  .game-info h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .game-info p {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.4;
+  }
+
+  .game-card .arrow {
+    margin-left: auto;
+    color: var(--text-dim);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 0.8rem;
+  }
+
+  footer a {
+    color: var(--red);
+    text-decoration: none;
+  }
+
+  @media (max-width: 480px) {
+    .game-card { padding: 16px; gap: 14px; }
+    .game-icon { width: 48px; height: 48px; font-size: 1.3rem; }
+    header h1 { font-size: 1.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>CMU-Q Weekly Games</h1>
+    <p class="week" id="week-label"></p>
+    <div class="divider"></div>
+  </header>
+
+  <div class="games">
+    <a href="connections.html" class="game-card">
+      <div class="game-icon connections">🔗</div>
+      <div class="game-info">
+        <h2>Connections</h2>
+        <p>Find four groups of four words that share a common thread.</p>
+      </div>
+      <span class="arrow">&#8250;</span>
+    </a>
+
+    <a href="wordle.html" class="game-card">
+      <div class="game-icon wordle">🟩</div>
+      <div class="game-info">
+        <h2>Wordle</h2>
+        <p>Guess the five-letter word in six tries or fewer.</p>
+      </div>
+      <span class="arrow">&#8250;</span>
+    </a>
+
+    <a href="crossword.html" class="game-card">
+      <div class="game-icon crossword">📝</div>
+      <div class="game-info">
+        <h2>Mini Crossword</h2>
+        <p>Fill in the 5x5 grid — quick clues, quick solve.</p>
+      </div>
+      <span class="arrow">&#8250;</span>
+    </a>
+  </div>
+
+  <footer>
+    <p>Falcon Weekly &mdash; <a href="mailto:falconweekly@andrew.cmu.edu">falconweekly@andrew.cmu.edu</a></p>
+  </footer>
+</div>
+
+<script>
+  // Display current week
+  const now = new Date();
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('week-label').textContent =
+    'Week of ' + now.toLocaleDateString('en-US', options);
+</script>
+</body>
+</html>
