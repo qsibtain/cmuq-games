@@ -249,8 +249,10 @@
     <h2 id="result-title"></h2>
     <p id="result-subtitle"></p>
     <button class="share-btn" onclick="shareResults()">Share Results</button>
+    <div id="leaderboard"></div>
   </div>
 </div>
+<script src="leaderboard.js"></script>
 
 <script>
 /* ============================================================
@@ -554,6 +556,12 @@ function showResultPanel(won) {
   document.getElementById('result-subtitle').textContent =
     won ? '' : `The word was ${TARGET}`;
   panel.classList.add('active');
+
+  // Leaderboard
+  if (won) {
+    Leaderboard.submit({ game: 'wordle', date: PUZZLE_DATE, score: guesses.length, metric: 'guesses', display: guesses.length + '/6' });
+  }
+  Leaderboard.show('leaderboard', 'wordle', PUZZLE_DATE);
 }
 
 function shareResults() {

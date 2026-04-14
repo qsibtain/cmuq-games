@@ -279,8 +279,10 @@
       <button class="btn primary" onclick="shareResults()">Share Results</button>
       <button class="btn" onclick="init()">Play Again</button>
     </div>
+    <div id="leaderboard"></div>
   </div>
 </div>
+<script src="leaderboard.js"></script>
 
 <script>
 /* ============================================================
@@ -471,6 +473,10 @@ function showResults() {
   document.getElementById('score-label').textContent = pct + '% correct';
   document.getElementById('score-message').textContent = message;
   document.getElementById('results').classList.add('active');
+
+  // Leaderboard
+  Leaderboard.submit({ game: 'trivia', date: PUZZLE_DATE, score: QUESTIONS.length - correctCount, metric: 'missed', display: correctCount + '/' + QUESTIONS.length });
+  Leaderboard.show('leaderboard', 'trivia', PUZZLE_DATE);
 }
 
 function shareResults() {

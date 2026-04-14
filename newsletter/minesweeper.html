@@ -255,8 +255,10 @@
     <h2 id="msg-title"></h2>
     <p id="msg-text"></p>
     <button class="share-btn" onclick="shareResult()">Share Result</button>
+    <div id="leaderboard"></div>
   </div>
 </div>
+<script src="leaderboard.js"></script>
 
 <script>
 /* ============================================================
@@ -467,6 +469,12 @@ function gameOver(won) {
   document.getElementById('msg-text').textContent = won
     ? 'Cleared in ' + formatTime(seconds) + '.'
     : 'Hit a mine at ' + formatTime(seconds) + '. Try again!';
+
+  // Leaderboard (wins only)
+  if (won) {
+    Leaderboard.submit({ game: 'minesweeper', date: new Date().toISOString().slice(0, 10), score: seconds, metric: 'seconds', display: formatTime(seconds) });
+  }
+  Leaderboard.show('leaderboard', 'minesweeper', new Date().toISOString().slice(0, 10));
 }
 
 function updateMineCount() {

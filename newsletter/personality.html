@@ -203,8 +203,10 @@
       <button class="btn primary" onclick="shareResult()">Share Result</button>
       <button class="btn" onclick="init()">Retake Quiz</button>
     </div>
+    <div id="leaderboard"></div>
   </div>
 </div>
+<script src="leaderboard.js"></script>
 
 <script>
 /* ============================================================
@@ -398,6 +400,10 @@ function showResult() {
   document.getElementById('result-type').textContent = result.title;
   document.getElementById('result-desc').textContent = result.description;
   document.getElementById('result-card').classList.add('active');
+
+  // Leaderboard (personality = distribution mode, not ranking)
+  Leaderboard.submit({ game: 'personality', date: PUZZLE_DATE, score: 0, metric: maxType, display: result.title });
+  Leaderboard.show('leaderboard', 'personality', PUZZLE_DATE);
 }
 
 function shareResult() {

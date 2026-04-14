@@ -270,8 +270,10 @@
     <p>Great job solving this week's mini crossword.</p>
     <button class="btn primary" onclick="shareTime()">Share Time</button>
     <button class="btn" onclick="document.getElementById('modal').classList.remove('active')" style="margin-left:4px">Close</button>
+    <div id="leaderboard"></div>
   </div>
 </div>
+<script src="leaderboard.js"></script>
 
 <script>
 /* ============================================================
@@ -618,10 +620,15 @@ function checkCompletion() {
   // All correct!
   completed = true;
   clearInterval(timerInterval);
+  const elapsedSec = Math.floor((Date.now() - timerStart) / 1000);
   setTimeout(() => {
-    document.getElementById('final-time').textContent =
-      document.getElementById('timer').textContent;
+    const timeStr = document.getElementById('timer').textContent;
+    document.getElementById('final-time').textContent = timeStr;
     document.getElementById('modal').classList.add('active');
+
+    // Leaderboard
+    Leaderboard.submit({ game: 'crossword', date: PUZZLE.date, score: elapsedSec, metric: 'seconds', display: timeStr });
+    Leaderboard.show('leaderboard', 'crossword', PUZZLE.date);
   }, 400);
 }
 

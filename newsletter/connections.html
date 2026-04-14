@@ -275,8 +275,10 @@
     <div class="result-grid" id="result-grid"></div>
     <button class="btn primary" onclick="copyResults()">Share Results</button>
     <button class="btn" onclick="document.getElementById('modal').classList.remove('active')">Close</button>
+    <div id="leaderboard"></div>
   </div>
 </div>
+<script src="leaderboard.js"></script>
 
 <script>
 /* ============================================================
@@ -541,6 +543,10 @@ function showResults(won) {
   }
 
   modal.classList.add('active');
+
+  // Leaderboard
+  Leaderboard.submit({ game: 'connections', date: PUZZLE.date, score: mistakes, metric: 'mistakes', display: mistakes + '/4 mistakes' });
+  Leaderboard.show('leaderboard', 'connections', PUZZLE.date);
 }
 
 function copyResults() {

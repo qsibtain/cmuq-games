@@ -291,7 +291,10 @@
     </div>
     <div class="found-list collapsed" id="found-list"></div>
   </div>
+
+  <div id="leaderboard"></div>
 </div>
+<script src="leaderboard.js"></script>
 
 <script>
 /* ============================================================
@@ -548,6 +551,12 @@ function submitWord() {
 
   renderRank();
   renderFoundWords();
+
+  // Leaderboard — update score after each valid word
+  var invertedScore = PUZZLE.maxScore - score;
+  var curRank = getRank(score);
+  Leaderboard.submit({ game: 'spelling-bee', date: PUZZLE.date, score: invertedScore, metric: 'score', display: 'Score: ' + score + ' — ' + curRank });
+  Leaderboard.show('leaderboard', 'spelling-bee', PUZZLE.date);
 }
 
 function renderRank() {
