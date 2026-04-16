@@ -293,6 +293,17 @@
   const options = { year: 'numeric', month: 'long', day: 'numeric' };
   document.getElementById('week-label').textContent =
     'Week of ' + now.toLocaleDateString('en-US', options);
+
+  // Pass Mailchimp identity params (pid, name) through to game links
+  const search = window.location.search;
+  if (search) {
+    document.querySelectorAll('.game-card').forEach(function(link) {
+      var href = link.getAttribute('href');
+      if (href && !href.includes('?')) {
+        link.setAttribute('href', href + search);
+      }
+    });
+  }
 </script>
 </body>
 </html>
