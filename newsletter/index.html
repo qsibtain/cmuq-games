@@ -8,9 +8,21 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --red: #C41230;
-    --red-dark: #9e0e27;
-    --bg: #fafafa;
+    /* CMU Brand Colors */
+    --cmu-red: #C41230;
+    --cmu-red-dark: #941120;
+    --cmu-iron: #6D6E71;
+    --cmu-steel: #E0E0E0;
+    --cmu-scots-rose: #EF3A47;
+    --cmu-gold: #FDB515;
+    --cmu-green: #009647;
+    --cmu-teal: #008F91;
+    --cmu-blue: #043673;
+    --cmu-sky: #007BC0;
+    --cmu-hornbostel: #1F4C4C;
+    --cmu-weaver: #182C4B;
+
+    --bg: #f8f7f5;
     --surface: #ffffff;
     --text: #1a1a2e;
     --text-dim: #6b7280;
@@ -24,47 +36,64 @@
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
-    padding: 20px;
+    padding: 0;
+  }
+
+  .hero {
+    background: linear-gradient(135deg, var(--cmu-red) 0%, var(--cmu-red-dark) 100%);
+    color: #fff;
+    padding: 40px 20px 36px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -20%;
+    width: 140%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .hero h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    position: relative;
+  }
+
+  .hero .week {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.8);
+    margin-top: 6px;
+    position: relative;
+  }
+
+  .hero .divider {
+    width: 48px;
+    height: 3px;
+    background: var(--cmu-gold);
+    margin: 16px auto 0;
+    border-radius: 2px;
+    position: relative;
   }
 
   .container {
     max-width: 640px;
     margin: 0 auto;
-    padding: 40px 0;
-  }
-
-  header {
-    text-align: center;
-    margin-bottom: 40px;
-  }
-
-  header h1 {
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: var(--text);
-    letter-spacing: -0.02em;
-  }
-
-  header .week {
-    font-size: 0.9rem;
-    color: var(--text-dim);
-    margin-top: 6px;
-  }
-
-  header .divider {
-    width: 48px;
-    height: 3px;
-    background: var(--red);
-    margin: 16px auto 0;
-    border-radius: 2px;
+    padding: 32px 20px 40px;
   }
 
   .section-label {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    color: var(--cmu-red);
     margin-bottom: 12px;
     margin-top: 32px;
   }
@@ -83,8 +112,9 @@
     gap: 20px;
     background: var(--surface);
     border: 1px solid var(--border);
+    border-left: 4px solid var(--card-accent, var(--border));
     border-radius: 12px;
-    padding: 24px;
+    padding: 22px 24px;
     text-decoration: none;
     color: inherit;
     box-shadow: var(--shadow);
@@ -97,25 +127,34 @@
   }
 
   .game-icon {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     flex-shrink: 0;
   }
 
-  .game-icon.connections { background: #f3e8ff; }
-  .game-icon.wordle { background: #dcfce7; }
-  .game-icon.crossword { background: #dbeafe; }
-  .game-icon.sudoku { background: #fef3c7; }
-  .game-icon.mathler { background: #fce7f3; }
-  .game-icon.spelling-bee { background: #fff7ed; }
-  .game-icon.minesweeper { background: #f1f5f9; }
-  .game-icon.trivia { background: #ecfdf5; }
-  .game-icon.personality { background: #fdf2f8; }
+  /* CMU brand-tinted icon backgrounds + card accent borders */
+  .game-card.connections  { --card-accent: #043673; }
+  .game-card.wordle       { --card-accent: #009647; }
+  .game-card.crossword    { --card-accent: #007BC0; }
+  .game-card.sudoku       { --card-accent: #FDB515; }
+  .game-card.mathler      { --card-accent: #EF3A47; }
+  .game-card.spelling-bee { --card-accent: #1F4C4C; }
+  .game-card.minesweeper  { --card-accent: #6D6E71; }
+  .game-card.trivia       { --card-accent: #008F91; }
+
+  .game-icon.connections  { background: #e8eef7; color: #043673; }
+  .game-icon.wordle       { background: #e0f5e8; color: #009647; }
+  .game-icon.crossword    { background: #ddeef9; color: #007BC0; }
+  .game-icon.sudoku       { background: #fef4d9; color: #b38400; }
+  .game-icon.mathler      { background: #fde4e6; color: #C41230; }
+  .game-icon.spelling-bee { background: #e4edec; color: #1F4C4C; }
+  .game-icon.minesweeper  { background: #ecedef; color: #6D6E71; }
+  .game-icon.trivia       { background: #dff0f0; color: #008F91; }
 
   .game-info h2 {
     font-size: 1.1rem;
@@ -131,9 +170,10 @@
 
   .game-card .arrow {
     margin-left: auto;
-    color: var(--text-dim);
+    color: var(--card-accent, var(--text-dim));
     font-size: 1.2rem;
     flex-shrink: 0;
+    opacity: 0.6;
   }
 
   footer {
@@ -146,29 +186,30 @@
   }
 
   footer a {
-    color: var(--red);
+    color: var(--cmu-red);
     text-decoration: none;
   }
 
   @media (max-width: 480px) {
-    .game-card { padding: 16px; gap: 14px; }
-    .game-icon { width: 48px; height: 48px; font-size: 1.3rem; }
-    header h1 { font-size: 1.4rem; }
+    .hero { padding: 28px 16px 24px; }
+    .hero h1 { font-size: 1.4rem; }
+    .game-card { padding: 14px 16px; gap: 14px; }
+    .game-icon { width: 44px; height: 44px; font-size: 1.3rem; }
   }
 </style>
 </head>
 <body>
 
-<div class="container">
-  <header>
-    <h1>CMU-Q Weekly Games</h1>
-    <p class="week" id="week-label"></p>
-    <div class="divider"></div>
-  </header>
+<header class="hero">
+  <h1>CMU-Q Weekly Games</h1>
+  <p class="week" id="week-label"></p>
+  <div class="divider"></div>
+</header>
 
-  <p class="section-label">Games</p>
+<div class="container">
+  <p class="section-label">This Week's Games</p>
   <div class="games">
-    <a href="connections.html" class="game-card">
+    <a href="connections.html" class="game-card connections">
       <div class="game-icon connections">🔗</div>
       <div class="game-info">
         <h2>Connections</h2>
@@ -177,7 +218,7 @@
       <span class="arrow">&#8250;</span>
     </a>
 
-    <a href="wordle.html" class="game-card">
+    <a href="wordle.html" class="game-card wordle">
       <div class="game-icon wordle">🟩</div>
       <div class="game-info">
         <h2>Wordle</h2>
@@ -186,7 +227,7 @@
       <span class="arrow">&#8250;</span>
     </a>
 
-    <a href="crossword.html" class="game-card">
+    <a href="crossword.html" class="game-card crossword">
       <div class="game-icon crossword">📝</div>
       <div class="game-info">
         <h2>Mini Crossword</h2>
@@ -195,7 +236,7 @@
       <span class="arrow">&#8250;</span>
     </a>
 
-    <a href="sudoku.html" class="game-card">
+    <a href="sudoku.html" class="game-card sudoku">
       <div class="game-icon sudoku">🔢</div>
       <div class="game-info">
         <h2>Sudoku Mini</h2>
@@ -204,7 +245,7 @@
       <span class="arrow">&#8250;</span>
     </a>
 
-    <a href="mathler.html" class="game-card">
+    <a href="mathler.html" class="game-card mathler">
       <div class="game-icon mathler">🧮</div>
       <div class="game-info">
         <h2>Mathler</h2>
@@ -213,7 +254,7 @@
       <span class="arrow">&#8250;</span>
     </a>
 
-    <a href="spelling-bee.html" class="game-card">
+    <a href="spelling-bee.html" class="game-card spelling-bee">
       <div class="game-icon spelling-bee">🐝</div>
       <div class="game-info">
         <h2>Spelling Bee</h2>
@@ -222,7 +263,7 @@
       <span class="arrow">&#8250;</span>
     </a>
 
-    <a href="minesweeper.html" class="game-card">
+    <a href="minesweeper.html" class="game-card minesweeper">
       <div class="game-icon minesweeper">💣</div>
       <div class="game-info">
         <h2>Minesweeper</h2>
@@ -230,24 +271,12 @@
       </div>
       <span class="arrow">&#8250;</span>
     </a>
-  </div>
 
-  <p class="section-label">More Fun</p>
-  <div class="games">
-    <a href="trivia.html" class="game-card">
+    <a href="trivia.html" class="game-card trivia">
       <div class="game-icon trivia">🧠</div>
       <div class="game-info">
         <h2>Weekly Trivia</h2>
         <p>Ten questions on campus life, Qatar, tech, and pop culture.</p>
-      </div>
-      <span class="arrow">&#8250;</span>
-    </a>
-
-    <a href="personality.html" class="game-card">
-      <div class="game-icon personality">✨</div>
-      <div class="game-info">
-        <h2>Personality Quiz</h2>
-        <p>Answer a few questions and find out what type you are.</p>
       </div>
       <span class="arrow">&#8250;</span>
     </a>
