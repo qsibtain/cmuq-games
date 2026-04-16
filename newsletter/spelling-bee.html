@@ -246,9 +246,92 @@
     font-weight: 800;
   }
 
+  /* Hints panel */
+  .hints-toggle {
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  .hints-toggle button {
+    padding: 6px 16px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-family: var(--font);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .hints-toggle button:hover { background: #f0f0f0; }
+
+  .hints-panel {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .hints-panel.active { display: block; }
+
+  .hints-summary {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .hints-summary strong { color: var(--text); }
+
+  .hints-grid {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+  }
+
+  .hints-grid th {
+    padding: 4px 6px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-dim);
+    border-bottom: 2px solid var(--border);
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+  }
+
+  .hints-grid th:first-child { text-align: left; }
+
+  .hints-grid td {
+    padding: 4px 6px;
+    text-align: center;
+    color: var(--text);
+    border-bottom: 1px solid #f0f0f0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hints-grid td:first-child {
+    text-align: left;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .hints-grid td.found { color: #16a34a; }
+  .hints-grid td.zero { color: #ddd; }
+
+  .hints-grid tr:last-child td { border-bottom: none; font-weight: 700; }
+
   @media (max-width: 480px) {
     .hex { width: 54px; height: 54px; font-size: 1.1rem; }
     .input-display { font-size: 1.3rem; }
+    .hints-grid { font-size: 0.7rem; }
+    .hints-panel { padding: 14px; }
   }
 </style>
 </head>
@@ -282,6 +365,14 @@
     <button class="btn" onclick="deleteLetter()">Delete</button>
     <button class="btn" onclick="shuffleOuter()">Shuffle</button>
     <button class="btn primary" onclick="submitWord()">Enter</button>
+  </div>
+
+  <div class="hints-toggle">
+    <button onclick="toggleHints()">Hints</button>
+  </div>
+  <div class="hints-panel" id="hints-panel">
+    <div class="hints-summary" id="hints-summary"></div>
+    <table class="hints-grid" id="hints-grid"></table>
   </div>
 
   <div class="found-section">
@@ -596,6 +687,11 @@ function renderFoundWords() {
     el.textContent = w;
     listEl.appendChild(el);
   }
+
+  // Refresh hints if panel is open
+  if (document.getElementById('hints-panel').classList.contains('active')) {
+    renderHints();
+  }
 }
 
 function toggleFoundList() {
@@ -612,6 +708,141 @@ function shuffleOuter() {
     [outerOrder[i], outerOrder[j]] = [outerOrder[j], outerOrder[i]];
   }
   renderHoneycomb();
+}
+
+// ── Hints panel ──────────────────────────────────────────────
+
+function toggleHints() {
+  const panel = document.getElementById('hints-panel');
+  panel.classList.toggle('active');
+  if (panel.classList.contains('active')) {
+    renderHints();
+  }
+}
+
+function buildHintsData() {
+  // Build a matrix: rows = first 2 letters, cols = word length buckets
+  const allWords = PUZZLE.words;
+  const buckets = {}; // { "RA": { 4: total, 5: total, ... }, ... }
+  const lengths = new Set();
+
+  for (const entry of allWords) {
+    const w = entry.word;
+    const prefix = w.slice(0, 2);
+    const len = w.length;
+    if (!buckets[prefix]) buckets[prefix] = {};
+    buckets[prefix][len] = (buckets[prefix][len] || 0) + 1;
+    lengths.add(len);
+  }
+
+  // Sort lengths, group 7+ into "7+"
+  const sortedLens = Array.from(lengths).sort((a, b) => a - b);
+  const colKeys = [];
+  let hasLong = false;
+  for (const l of sortedLens) {
+    if (l >= 7) { hasLong = true; } else { colKeys.push(l); }
+  }
+  if (hasLong) colKeys.push('7+');
+
+  return { buckets, colKeys, allWords };
+}
+
+function renderHints() {
+  const { buckets, colKeys, allWords } = buildHintsData();
+  const prefixes = Object.keys(buckets).sort();
+
+  // Count found words by prefix + length
+  const foundMap = {};
+  for (const w of foundWords) {
+    const prefix = w.slice(0, 2);
+    const len = w.length;
+    const key = prefix + ':' + (len >= 7 ? '7+' : len);
+    foundMap[key] = (foundMap[key] || 0) + 1;
+  }
+
+  // Summary
+  const totalWords = allWords.length;
+  const summaryEl = document.getElementById('hints-summary');
+  summaryEl.innerHTML =
+    '<strong>' + foundWords.length + '</strong> of <strong>' + totalWords + '</strong> words found &nbsp;&middot;&nbsp; ' +
+    '<strong>' + score + '</strong> of <strong>' + PUZZLE.maxScore + '</strong> points';
+
+  // Build table
+  let html = '<thead><tr><th></th>';
+  for (const col of colKeys) {
+    html += '<th>' + col + '</th>';
+  }
+  html += '<th>\u03A3</th></tr></thead><tbody>';
+
+  // Totals for footer
+  const colTotals = {};
+  const colFound = {};
+  let grandTotal = 0;
+  let grandFound = 0;
+
+  for (const prefix of prefixes) {
+    html += '<tr><td>' + prefix + '</td>';
+    let rowTotal = 0;
+    let rowFound = 0;
+
+    for (const col of colKeys) {
+      // Count total for this cell
+      let cellTotal = 0;
+      if (col === '7+') {
+        for (const [len, count] of Object.entries(buckets[prefix])) {
+          if (parseInt(len) >= 7) cellTotal += count;
+        }
+      } else {
+        cellTotal = buckets[prefix][col] || 0;
+      }
+
+      const key = prefix + ':' + col;
+      const cellFound = foundMap[key] || 0;
+
+      colTotals[col] = (colTotals[col] || 0) + cellTotal;
+      colFound[col] = (colFound[col] || 0) + cellFound;
+      rowTotal += cellTotal;
+      rowFound += cellFound;
+      grandTotal += cellTotal;
+      grandFound += cellFound;
+
+      if (cellTotal === 0) {
+        html += '<td class="zero">-</td>';
+      } else if (cellFound >= cellTotal) {
+        html += '<td class="found">' + cellTotal + '</td>';
+      } else {
+        html += '<td>' + cellTotal + '</td>';
+      }
+    }
+
+    // Row total
+    if (rowFound >= rowTotal) {
+      html += '<td class="found">' + rowTotal + '</td>';
+    } else {
+      html += '<td>' + rowTotal + '</td>';
+    }
+    html += '</tr>';
+  }
+
+  // Totals row
+  html += '<tr><td>\u03A3</td>';
+  for (const col of colKeys) {
+    const t = colTotals[col] || 0;
+    const f = colFound[col] || 0;
+    if (f >= t && t > 0) {
+      html += '<td class="found">' + t + '</td>';
+    } else {
+      html += '<td>' + t + '</td>';
+    }
+  }
+  if (grandFound >= grandTotal) {
+    html += '<td class="found">' + grandTotal + '</td>';
+  } else {
+    html += '<td>' + grandTotal + '</td>';
+  }
+  html += '</tr></tbody>';
+
+  document.getElementById('hints-grid').innerHTML = html;
 }
 
 // Keyboard support
