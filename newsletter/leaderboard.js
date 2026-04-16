@@ -282,6 +282,17 @@ window.Leaderboard = (function () {
       localStorage.setItem('lb_pid', pid);
       localStorage.setItem('lb_name', name);
     }
+
+    // Preserve identity params on all internal links (back links, etc.)
+    var search = window.location.search;
+    if (search) {
+      document.querySelectorAll('a[href]').forEach(function(link) {
+        var href = link.getAttribute('href');
+        if (href && !href.startsWith('http') && !href.startsWith('mailto:') && !href.includes('?')) {
+          link.setAttribute('href', href + search);
+        }
+      });
+    }
   })();
 
   // ── Public API ─────────────────────────────────────────────
