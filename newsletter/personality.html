@@ -228,84 +228,84 @@
    ============================================================ */
 const PUZZLE_DATE = '2026-04-22';
 const QUIZ = {
-  title: "What's Your Campus Study Style?",
+  title: "What Type of Developer Are You?",
   subtitle: "Answer 6 questions to find out",
   questions: [
     {
-      q: "It's 9 PM and you have a deadline tomorrow. What do you do?",
+      q: "You're assigned a group coding project. What's your first move?",
       options: [
-        { text: "Head to the library — silence is golden", type: "A" },
-        { text: "Grab friends for a group study session", type: "B" },
-        { text: "Set up at a coffee shop with karak and headphones", type: "C" },
-        { text: "Stay in bed with your laptop and snacks", type: "D" },
+        { text: "Set up the repo, create issues, and write a project plan", type: "A" },
+        { text: "Sketch the UI and think about the user experience", type: "B" },
+        { text: "Dive straight into coding the core algorithm", type: "C" },
+        { text: "Research the best libraries and frameworks to use", type: "D" },
       ]
     },
     {
-      q: "How do you organize your notes?",
+      q: "A bug is found in production. How do you react?",
       options: [
-        { text: "Color-coded folders and neat handwriting", type: "A" },
-        { text: "Shared Google Docs with classmates", type: "B" },
-        { text: "One giant document — I'll find it later", type: "C" },
-        { text: "What notes? I just remember things", type: "D" },
+        { text: "Check the logs and trace it systematically", type: "A" },
+        { text: "Ask the team if anyone has seen this before", type: "B" },
+        { text: "Start adding print statements everywhere", type: "C" },
+        { text: "Search Stack Overflow and documentation first", type: "D" },
       ]
     },
     {
-      q: "Your ideal break between classes looks like:",
+      q: "What's your ideal coding environment?",
       options: [
-        { text: "Reviewing flashcards for the next class", type: "A" },
-        { text: "Chatting with friends in the common area", type: "B" },
-        { text: "Finding a quiet spot to recharge", type: "C" },
-        { text: "Napping literally anywhere possible", type: "D" },
+        { text: "Two monitors, dark theme, everything customized", type: "A" },
+        { text: "A collaborative space where I can pair program", type: "B" },
+        { text: "Anywhere with good Wi-Fi and karak", type: "C" },
+        { text: "A quiet room with zero distractions", type: "D" },
       ]
     },
     {
-      q: "When working on a group project, you're the one who:",
+      q: "Which elective sounds most interesting?",
       options: [
-        { text: "Makes the timeline and assigns tasks", type: "A" },
-        { text: "Keeps everyone motivated and on the same page", type: "B" },
-        { text: "Does the creative or design work", type: "C" },
-        { text: "Pulls it all together the night before (and it's great)", type: "D" },
+        { text: "Systems programming", type: "A" },
+        { text: "Human-computer interaction", type: "B" },
+        { text: "Machine learning", type: "C" },
+        { text: "Software architecture", type: "D" },
       ]
     },
     {
-      q: "Pick a study fuel:",
+      q: "How do you document your code?",
       options: [
-        { text: "Green tea — calm and focused", type: "A" },
-        { text: "Karak — it's a social ritual", type: "B" },
-        { text: "Double espresso — maximum power", type: "C" },
-        { text: "Energy drink at midnight", type: "D" },
+        { text: "Detailed README, inline comments, and a wiki", type: "A" },
+        { text: "Just enough so my teammates understand it", type: "B" },
+        { text: "My code is self-documenting (I hope)", type: "C" },
+        { text: "I write documentation after the code works", type: "D" },
       ]
     },
     {
-      q: "How do you feel about exam week?",
+      q: "What motivates you most in a project?",
       options: [
-        { text: "Prepared — I've been reviewing for weeks", type: "A" },
-        { text: "Nervous but my study group keeps me sane", type: "B" },
-        { text: "I work best under pressure honestly", type: "C" },
-        { text: "I'll cross that bridge when I get to it", type: "D" },
+        { text: "Solving a technically challenging problem", type: "A" },
+        { text: "Building something people will actually use", type: "B" },
+        { text: "Learning a new technology or technique", type: "C" },
+        { text: "Creating clean, elegant architecture", type: "D" },
       ]
     },
   ],
   results: {
     A: {
-      emoji: "📚",
-      title: "The Strategist",
-      description: "You're organized, disciplined, and always three steps ahead. Your planner is your best friend, and you've never missed a deadline. People come to you when they need structure — you're the backbone of every group project."
+      emoji: "🔧",
+      title: "The Systems Thinker",
+      description: "You love structure, efficiency, and understanding how things work under the hood. You're the one debugging memory leaks at 2 AM because you know the system depends on it. Reliable, methodical, and deeply technical."
     },
     B: {
       emoji: "🤝",
-      title: "The Collaborator",
-      description: "You thrive on teamwork and social energy. Studying alone? Couldn't be you. You're the one who organizes review sessions, shares notes freely, and makes campus feel like a community. Everyone wants you in their group."
+      title: "The People's Developer",
+      description: "Code is a means to an end for you — and that end is making people's lives better. You think about the user first, communicate well with your team, and bridge the gap between tech and the real world."
     },
     C: {
-      emoji: "🎧",
-      title: "The Independent",
-      description: "You march to your own beat — headphones on, world off. You're creative, focused, and do your best work in your own space on your own terms. You might procrastinate, but when you lock in, the results speak for themselves."
+      emoji: "⚡",
+      title: "The Hacker",
+      description: "Move fast, break things, fix them, repeat. You're driven by curiosity and love experimenting with new tools and ideas. Your prototypes are legendary, even if your git history is... creative."
     },
     D: {
-      emoji: "🌙",
-      title: "The Night Owl",
-      description: "Deadlines are just suggestions until 11 PM, when your brain finally kicks into gear. You're relaxed, adaptable, and surprisingly effective under pressure. Your late-night productivity is honestly legendary."
+      emoji: "🏛️",
+      title: "The Architect",
+      description: "You see the big picture. Before writing a line of code, you've already mapped out the entire system in your head. Clean abstractions, good patterns, and maintainable code are your north star."
     }
   }
 };
